@@ -31,7 +31,7 @@
     "local-guide": {
       "description": "Read-only local repository assistant",
       "mode": "primary",
-      "prompt": "{file:./repo-system.txt}",
+      "prompt": "{file:./lab/demo/repo-system.txt}",
       "steps": 8,
       "permission": {
         "*": "deny",
