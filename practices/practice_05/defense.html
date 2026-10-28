@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Практика 4 — защита · TaskFlow на OpenCode</title>
+<style>
+  :root{
+    --ink:#0d0e10;
+    --surface:#15171b;
+    --surface-2:#1b1e23;
+    --line:#2a2f36;
+    --text:#e9e7e2;
+    --muted:#9aa1a9;
+    --accent:#57c98a;
+    --ok:#57c98a;
+    --err:#e0736a;
+    --mono:ui-monospace,"SF Mono",SFMono-Regular,Menlo,monospace;
+    --sans:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue",Arial,sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{
+    background:var(--ink); color:var(--text); font-family:var(--sans);
+    overflow:hidden; -webkit-font-smoothing:antialiased;
+  }
+  #stage{
+    position:fixed; left:50%; top:50%; width:1920px; height:1080px;
+    transform-origin:center center; transform:translate(-50%,-50%);
+    background:var(--ink);
+  }
+  .slide{
+    position:absolute; inset:0; padding:92px 120px;
+    display:none; flex-direction:column;
+  }
+  .slide.active{display:flex}
+
+  /* ---- shared chrome ---- */
+  .eyebrow{
+    font-family:var(--mono); font-size:20px; letter-spacing:.18em;
+    text-transform:uppercase; color:var(--accent); margin-bottom:26px;
+  }
+  .eyebrow .dim{color:var(--muted)}
+  h1{font-size:84px; line-height:1.03; letter-spacing:-.025em; font-weight:700; text-wrap:pretty}
+  h2{font-size:50px; line-height:1.08; letter-spacing:-.02em; font-weight:700; margin-bottom:14px; text-wrap:pretty}
+  h3{font-size:26px; font-weight:650; letter-spacing:-.01em}
+  .lede{font-size:27px; line-height:1.4; color:var(--muted); max-width:64ch; text-wrap:pretty}
+  .rule{height:1px; background:var(--line); margin:30px 0}
+  .grow{flex:1}
+  .foot{font-size:20px; color:var(--muted); font-family:var(--mono)}
+  strong{color:var(--text); font-weight:650}
+  em{color:var(--accent); font-style:normal; font-weight:600}
+
+  a.lnk{color:var(--accent); text-decoration:none; border-bottom:1px solid rgba(87,201,138,.4)}
+  a.lnk:hover,a.lnk:focus-visible{border-bottom-color:var(--accent)}
+  a.lnk:focus-visible{outline:2px solid var(--accent); outline-offset:3px}
+  .path{font-family:var(--mono); font-size:19px; color:var(--accent)}
+
+  /* ---- code / terminal ---- */
+  .term{
+    background:var(--surface); border:1px solid var(--line); border-radius:14px;
+    font-family:var(--mono); font-size:21px; line-height:1.6; color:#d7dbe0;
+    padding:26px 30px; white-space:pre-wrap; word-break:break-word; overflow:hidden;
+  }
+  .term.sm{font-size:19px}
+  .c2b .term{font-size:18px}   /* hook log: fits the 53-char line on one row */
+  .term .c{color:var(--muted)}          /* comment / dim */
+  .term .p{color:var(--accent)}         /* command */
+  .term .g{color:var(--ok)}             /* pass */
+  .term .r{color:var(--err)}            /* fail */
+  .term .k{color:#74c7c4}               /* key */
+  .lbl{font-family:var(--mono); font-size:17px; letter-spacing:.12em; text-transform:uppercase; color:var(--muted); margin-bottom:12px}
+
+  /* ---- columns ---- */
+  .cols{display:grid; gap:64px; margin-top:10px}
+  .c2{grid-template-columns:1fr 1fr}
+  .c2u{grid-template-columns:1.15fr .85fr}
+  .c2b{grid-template-columns:1.2fr 1fr}
+
+  /* ---- lists ---- */
+  ul.clean{list-style:none; display:flex; flex-direction:column; gap:20px}
+  ul.clean>li{font-size:25px; line-height:1.35; padding-left:36px; position:relative; text-wrap:pretty}
+  ul.clean>li::before{content:""; position:absolute; left:6px; top:13px; width:12px; height:2px; background:var(--accent)}
+  ul.clean>li .s{display:block; color:var(--muted); font-size:21px; margin-top:4px}
+
+  /* ---- table ---- */
+  table{width:100%; border-collapse:collapse; font-size:23px}
+  th,td{text-align:left; padding:18px 16px; border-bottom:1px solid var(--line); vertical-align:top}
+  th{font-family:var(--mono); font-size:17px; letter-spacing:.1em; text-transform:uppercase; color:var(--muted); font-weight:500}
+  td:first-child{color:var(--text)}
+  .num{text-align:right; font-family:var(--mono); color:var(--accent)}
+  tr:last-child td{border-bottom:none}
+  .tot td{border-top:1px solid var(--line); font-weight:650}
+
+  /* ---- flow ---- */
+  .flow{display:flex; align-items:stretch; gap:0; margin:8px 0 4px}
+  .node{background:var(--surface-2); border:1px solid var(--line); border-radius:12px; padding:22px 26px; flex:1}
+  .node .t{font-size:23px; font-weight:650}
+  .node .d{font-family:var(--mono); font-size:18px; color:var(--muted); margin-top:8px}
+  .arrow{align-self:center; font-family:var(--mono); color:var(--accent); font-size:30px; padding:0 22px}
+  .tag{display:inline-block; font-family:var(--mono); font-size:18px; color:var(--accent); border:1px solid var(--line); border-radius:999px; padding:4px 14px}
+
+  .steps{display:flex; flex-direction:column; gap:22px; counter-reset:st}
+  .steps .st{display:grid; grid-template-columns:64px 1fr; gap:22px; align-items:start}
+  .steps .st .n{font-family:var(--mono); font-size:26px; color:var(--accent)}
+  .steps .st .b{font-size:24px; line-height:1.35; color:var(--muted)}
+  .steps .st .b b{color:var(--text); font-weight:650}
+
+  /* ---- footer chrome ---- */
+  .chrome{
+    position:absolute; left:120px; right:120px; bottom:44px;
+    display:flex; justify-content:space-between; align-items:center;
+    font-family:var(--mono); font-size:18px; color:var(--muted);
+  }
+  .chrome .bar{flex:1; height:1px; background:var(--line); margin:0 26px}
+  /* ---- nav buttons ---- */
+  .nav{
+    position:fixed; bottom:18px; right:18px; display:flex; gap:10px; z-index:10;
+  }
+  .nav button{
+    width:48px; height:48px; min-width:44px; min-height:44px;
+    background:var(--surface); color:var(--text); border:1px solid var(--line);
+    border-radius:10px; font-size:20px; cursor:pointer; font-family:var(--mono);
+  }
+  .nav button:hover{border-color:var(--accent); color:var(--accent)}
+  .nav button:focus-visible{outline:2px solid var(--accent); outline-offset:3px}
+
+  @media (prefers-reduced-motion:no-preference){
+    .slide.active{animation:in .28s ease-out}
+    @keyframes in{from{opacity:0; transform:translateY(10px)} to{opacity:1; transform:none}}
+  }
+
+  @media print{
+    @page{size:1920px 1080px; margin:0}
+    body{overflow:visible}
+    .nav{display:none}
+    #stage{position:static; transform:none!important; width:1920px; height:auto}
+    .slide{display:flex!important; position:relative; page-break-after:always; break-after:page}
+    .chrome{position:static; margin-top:auto}
+  }
+</style>
+</head>
+<body>
+
+<main id="stage" aria-label="Презентация практики 4">
+
+  <!-- 1 · TITLE -->
+  <section class="slide" id="slide-1" data-label="Title">
+    <div class="eyebrow">Практика 4 <span class="dim">· домашняя работа</span></div>
+    <h1>Среда агента, skill<br>и собственный MCP</h1>
+    <div class="rule"></div>
+    <p class="lede">Как правила, skill, MCP-инструмент и автопроверка работают вместе
+      в одном проекте — <strong>TaskFlow</strong> на <strong>OpenCode 1.18.34</strong>.</p>
+    <div class="grow"></div>
+    <div class="cols c2">
+      <div>
+        <div class="lbl">Автор</div>
+        <div style="font-size:26px">Абрикосов Александр</div>
+        <div class="foot" style="margin-top:6px">ИТМО</div>
+      </div>
+      <div style="text-align:right; align-self:end">
+        <div class="foot">Навигация: ← → · Space · Home · End</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 2 · MAP / DEEPLINKS -->
+  <section class="slide" id="slide-2" data-label="Карта файлов">
+    <div class="eyebrow">Карта <span class="dim">· кликабельно, локальные файлы</span></div>
+    <h2>Что где лежит</h2>
+    <table>
+      <thead><tr><th>Требование</th><th>Файл</th><th>Что показывает</th></tr></thead>
+      <tbody>
+        <tr><td>Правила агента</td><td><a class="lnk" href="AGENTS.md">AGENTS.md</a></td><td>OpenCode читает автоматически; раздел про среду</td></tr>
+        <tr><td>Skill</td><td><a class="lnk" href=".opencode/skills/taskflow-verify/SKILL.md">.opencode/skills/taskflow-verify/SKILL.md</a></td><td>загрузка по требованию через <span class="path">skill</span></td></tr>
+        <tr><td>MCP-конфигурация</td><td><a class="lnk" href="opencode.json">opencode.json</a></td><td>секция <span class="path">mcp.taskflow</span> (local, stdio)</td></tr>
+        <tr><td>Свой MCP-сервер</td><td><a class="lnk" href="mcp/taskflow-server.mjs">mcp/taskflow-server.mjs</a></td><td>один tool <span class="path">task_summary</span></td></tr>
+        <tr><td>Hook (автопроверка)</td><td><a class="lnk" href=".opencode/plugins/taskflow-check.js">.opencode/plugins/taskflow-check.js</a></td><td><span class="path">npm test</span> после правки</td></tr>
+        <tr><td>Runner</td><td><a class="lnk" href="scripts/verify.sh">scripts/verify.sh</a></td><td>тесты + живой smoke-test сервера</td></tr>
+        <tr><td>Рефлексия</td><td><a class="lnk" href="reflection.md">reflection.md</a></td><td>что помогло / мешало / где вмешался</td></tr>
+      </tbody>
+    </table>
+    <div class="grow"></div>
+    <p class="foot">Запуск OpenCode — из каталога practice_04, иначе hook возьмёт не ту директорию.</p>
+    <div class="chrome"><span>Практика 4 · защита</span><span class="bar"></span><span class="cnt"></span></div>
+  </section>
+
+  <!-- 3 · AGENTS.md -->
+  <section class="slide" id="slide-3" data-label="AGENTS.md">
+    <div class="eyebrow">Среда · 1/5 <span class="dim">правила агента</span></div>
+    <h2>AGENTS.md — контракт проекта</h2>
+    <div class="cols c2u">
+      <ul class="clean">
+        <li>OpenCode сам подхватывает <span class="path">AGENTS.md</span> из корня проекта — отдельно регистрировать не нужно.</li>
+        <li>Здесь: команды сборки/тестов, структура, правила слоёв, Definition of Done, границы «Always / Ask first / Never».</li>
+        <li>Добавил раздел <em>Agent Environment (OpenCode)</em>: где skill, где MCP-tool, где hook.</li>
+        <li>71 строка — правило «держать инструкции короткими», иначе модели хуже следуют за шумом.</li>
+      </ul>
+      <div>
+        <div class="lbl">AGENTS.md · фрагмент</div>
+        <div class="term sm"><span class="c">## Agent Environment (OpenCode)</span>
+- Rules live in this `AGENTS.md`; OpenCode loads it
+  automatically for the project.
+- Skills live in `.opencode/skills/&lt;name&gt;/SKILL.md`.
+- MCP: `opencode.json` starts the local `taskflow`
+  server, exposing the read-only `task_summary` tool.
+- Hook: `.opencode/plugins/taskflow-check.js` runs
+  `npm test` after source edits and appends the result.</div>
+      </div>
+    </div>
+    <div class="chrome"><span>Практика 4 · защита</span><span class="bar"></span><span class="cnt"></span></div>
+  </section>
+
+  <!-- 4 · SKILL -->
+  <section class="slide" id="slide-4" data-label="Skill">
+    <div class="eyebrow">Среда · 2/5 <span class="dim">skill</span></div>
+    <h2>Skill <span class="path">taskflow-verify</span></h2>
+    <div class="cols c2">
+      <div>
+        <p class="lede" style="margin-bottom:26px">Skill — это инструкция, которая лежит в репозитории и
+          подгружается <strong>только по требованию</strong> (native <span class="path">skill</span>-tool),
+          а не занимает контекст всегда.</p>
+        <ul class="clean">
+          <li>Frontmatter: <span class="path">name</span> + <span class="path">description</span> — по описанию агент сам понимает, когда грузить.</li>
+          <li>Контракт: запустить <span class="path">scripts/verify.sh</span>, прочитать PASS/FAIL, показать первое падение, <em>не ослаблять тесты</em> ради зелёного.</li>
+        </ul>
+      </div>
+      <div>
+        <div class="lbl">устройство · SKILL.md</div>
+        <div class="term sm"><span class="k">---</span>
+<span class="k">name:</span> taskflow-verify
+<span class="k">description:</span> Run the TaskFlow verification runner and
+  interpret its PASS/FAIL output. Use after changing
+  backend, database, tests or server wiring...
+<span class="k">---</span>
+<span class="c">## What I do</span>
+Execute `scripts/verify.sh` from the repository root...
+<span class="c">## How to use me</span>
+1. Run: `bash scripts/verify.sh`
+2. Read the summary (`VERIFY: OK` / `VERIFY: FAILED`).</div>
+      </div>
+    </div>
+    <div class="chrome"><span>Практика 4 · защита</span><span class="bar"></span><span class="cnt"></span></div>
+  </section>
+
+  <!-- 5 · MCP ARCHITECTURE -->
+  <section class="slide" id="slide-5" data-label="MCP-архитектура">
+    <div class="eyebrow">Среда · 3/5 <span class="dim">свой MCP-сервер</span></div>
+    <h2>Свой MCP: <span class="path">taskflow-server.mjs</span></h2>
+    <div class="flow" aria-hidden="true">
+      <div class="node"><div class="t">OpenCode</div><div class="d">агент видит tool</div></div>
+      <div class="arrow">→</div>
+      <div class="node"><div class="t">stdio · JSON-RPC</div><div class="d">node mcp/taskflow-server.mjs</div></div>
+      <div class="arrow">→</div>
+      <div class="node"><div class="t">task_summary</div><div class="d">read-only</div></div>
+      <div class="arrow">→</div>
+      <div class="node"><div class="t">data/taskflow.db</div><div class="d">better-sqlite3</div></div>
+    </div>
+    <div class="rule"></div>
+    <div class="cols c2">
+      <ul class="clean">
+        <li>Один полезный tool. Больше инструментов — больше токенов в контексте; в README курса прямо: количество подключений баллов не добавляет.</li>
+        <li><strong>Read-only</strong> и по делу: агенту нужно <em>смотреть</em> данные приложения, но не право их портить.</li>
+        <li>Регистрация: <span class="path">server.registerTool(name, {inputSchema}, cb)</span> — актуальный API SDK 1.32 (<span class="path">tool()</span> устарел).</li>
+      </ul>
+      <div>
+        <div class="lbl">opencode.json</div>
+        <div class="term sm">{
+  <span class="k">"$schema"</span>: "https://opencode.ai/config.json",
+  <span class="k">"mcp"</span>: {
+    <span class="k">"taskflow"</span>: {
+      <span class="k">"type"</span>: "local",
+      <span class="k">"command"</span>: ["node", "mcp/taskflow-server.mjs"],
+      <span class="k">"cwd"</span>: ".",
+      <span class="k">"enabled"</span>: true
+    }
+  }
+}</div>
+      </div>
+    </div>
+    <div class="chrome"><span>Практика 4 · защита</span><span class="bar"></span><span class="cnt"></span></div>
+  </section>
+
+  <!-- 6 · MCP SUCCESS -->
+  <section class="slide" id="slide-6" data-label="MCP успех">
+    <div class="eyebrow">MCP · успешный вызов <span class="dim">через MCP Inspector</span></div>
+    <h2>Успешный сценарий</h2>
+    <p class="lede" style="margin-bottom:22px">Inspector проверяет сервер <strong>независимо от агента и модели</strong> —
+      чисто по протоколу. Снизу — реальный вывод.</p>
+    <div class="lbl">$ npx @modelcontextprotocol/inspector --cli node mcp/taskflow-server.mjs --method tools/call --tool-name task_summary --tool-arg status=all</div>
+    <div class="term">{ <span class="k">"content"</span>: [ { <span class="k">"type"</span>: "text", <span class="k">"text"</span>: "
+TaskFlow database: .../practice_04/data/taskflow.db
+total 4 | active 4 | completed 0 | overdue 1
+filter=\"all\" -&gt; 4 shown (max 20):
+  - #4 [ ] Dark theme + date (due 2026-12-31)
+  - #3 [ ] Something new (due 0001-01-01)
+  - #2 [ ] Something
+  - #1 [ ] Smoke test" } ] }</div>
+    <div class="grow"></div>
+    <p class="foot">Данные — из настоящей базы приложения, а не заглушка. <span class="tag">tools/list</span> тем же способом отдаёт описание инструмента.</p>
+    <div class="chrome"><span>Практика 4 · защита</span><span class="bar"></span><span class="cnt"></span></div>
+  </section>
+
+  <!-- 7 · MCP ERROR -->
+  <section class="slide" id="slide-7" data-label="MCP ошибка">
+    <div class="eyebrow">MCP · ошибочный вход <span class="dim">два сценария</span></div>
+    <h2>Обработка ошибочного входа</h2>
+    <div class="cols c2">
+      <div>
+        <div class="lbl">1 · неизвестный status</div>
+        <div class="term sm">--tool-arg status=pending
+
+{
+  <span class="k">"content"</span>: [ { <span class="k">"type"</span>: "text",
+    <span class="k">"text"</span>: "<span class="r">Invalid status \"pending\".</span>
+              Allowed values: all, active,
+              completed, overdue." } ],
+  <span class="k">"isError"</span>: <span class="r">true</span>
+}</div>
+        <p class="foot" style="margin-top:16px">Валидацию делаю сам, а не отдаю на откуп схеме, — чтобы сообщение было понятным человеку.</p>
+      </div>
+      <div>
+        <div class="lbl">2 · базы ещё нет</div>
+        <div class="term sm">-e TASKFLOW_DB_PATH=/nonexistent/nope.db
+
+{
+  <span class="k">"content"</span>: [ { <span class="k">"type"</span>: "text",
+    <span class="k">"text"</span>: "<span class="r">Cannot read the TaskFlow</span>
+      <span class="r">database at /nonexistent/nope.db.</span>
+      Start the app once with `npm start`
+      so the file is created..." } ],
+  <span class="k">"isError"</span>: <span class="r">true</span>
+}</div>
+        <p class="foot" style="margin-top:16px">Ошибка не «падает», а возвращает <span class="path">isError:true</span> с инструкцией, что сделать.</p>
+      </div>
+    </div>
+    <div class="chrome"><span>Практика 4 · защита</span><span class="bar"></span><span class="cnt"></span></div>
+  </section>
+
+  <!-- 8 · HOOK -->
+  <section class="slide" id="slide-8" data-label="Hook">
+    <div class="eyebrow">Среда · 4/5 <span class="dim">hook — автопроверка</span></div>
+    <h2>Проверка запускается сама — после правки</h2>
+    <div class="cols c2b">
+      <div class="steps">
+        <div class="st"><div class="n">01</div><div class="b"><b>Срабатывает</b> на <span class="path">tool.execute.after</span> для edit / write / apply_patch.</div></div>
+        <div class="st"><div class="n">02</div><div class="b"><b>Фильтр по путям:</b> только <span class="path">src/ public/ test/ mcp/ scripts/ server.js</span> — правка README тесты не гоняет.</div></div>
+        <div class="st"><div class="n">03</div><div class="b"><b>Запускает</b> <span class="path">npm test</span> и дописывает результат в <span class="path">output.output</span> — агент видит его в том же ходе.</div></div>
+        <div class="st"><div class="n">04</div><div class="b"><b>Никогда не падает:</b> красные тесты не отменяют правку, только всплывают в выводе.</div></div>
+      </div>
+      <div>
+        <div class="lbl">реальный вывод после правки src/</div>
+        <div class="term sm"><span class="g">[taskflow-check] npm test: PASS (25 passed, 0 failed)</span>
+
+<span class="c"># при падении:</span>
+<span class="r">[taskflow-check] npm test: FAIL (exit 1, N failed)</span>
+fail 1
+AssertionError: ...</div>
+      </div>
+    </div>
+    <div class="chrome"><span>Практика 4 · защита</span><span class="bar"></span><span class="cnt"></span></div>
+  </section>
+
+  <!-- 9 · RUNNER + EVIDENCE -->
+  <section class="slide" id="slide-9" data-label="Runner и проверки">
+    <div class="eyebrow">Среда · 5/5 <span class="dim">runner + сводные проверки</span></div>
+    <h2>Runner и что подтверждено</h2>
+    <div class="cols c2">
+      <div>
+        <div class="lbl">$ bash scripts/verify.sh</div>
+        <div class="term">PASS  npm test
+PASS  GET /api/tasks returns a JSON array
+PASS  GET / returns HTML
+<span class="g">VERIFY: OK</span></div>
+        <p class="foot" style="margin-top:16px">Runner берёт scratch <span class="path">PORT=3999</span> и <span class="path">data/verify.db</span> — рабочую базу не трогает.</p>
+      </div>
+      <div>
+        <div class="lbl">прочие подтверждения</div>
+        <div class="term sm"><span class="p">$ npm test</span>
+ℹ tests 25   ℹ pass 25   ℹ fail 0
+
+<span class="p">$ opencode mcp list</span>
+●  <span class="g">✓ taskflow connected</span>
+
+<span class="p">$ opencode run "…task_summary + skill…"</span>
+⚙ taskflow_task_summary {"status":"overdue"}
+→ Skill "taskflow-verify"</div>
+      </div>
+    </div>
+    <div class="chrome"><span>Практика 4 · защита</span><span class="bar"></span><span class="cnt"></span></div>
+  </section>
+
+  <!-- 10 · PITFALLS -->
+  <section class="slide" id="slide-10" data-label="Грабли">
+    <div class="eyebrow">Где пришлось вмешаться <span class="dim">· честно о граблях</span></div>
+    <h2>Ошибки, которые пришлось найти и починить</h2>
+    <table>
+      <thead><tr><th>Что сломалось</th><th>Причина</th><th>Починка</th></tr></thead>
+      <tbody>
+        <tr>
+          <td>Hook писал <span class="r">ENOENT …/ITMOv2/package.json</span></td>
+          <td>Брал <span class="path">worktree || directory</span>; <span class="path">worktree</span> — корень git, где нет package.json</td>
+          <td><span class="path">directory || worktree</span></td>
+        </tr>
+        <tr>
+          <td>Плагин не подхватывался</td>
+          <td>Разные источники пишут <span class="path">.opencode/plugin</span> и <span class="path">plugins</span></td>
+          <td>Проверил на живой установке → <span class="path">plugins/</span></td>
+        </tr>
+        <tr>
+          <td>Ломается stdio-протокол</td>
+          <td>stdout у MCP — это канал JSON-RPC</td>
+          <td>Диагностику только в <span class="path">stderr</span></td>
+        </tr>
+        <tr>
+          <td>Предупреждение Node при импорте плагина</td>
+          <td>У <span class="path">.opencode/*.js</span> нет <span class="path">"type"</span> на чистом клоне</td>
+          <td>Тест импортирует через <span class="path">data:</span>-URL</td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="grow"></div>
+    <div class="chrome"><span>Практика 4 · защита</span><span class="bar"></span><span class="cnt"></span></div>
+  </section>
+
+  <!-- 11 · CLOSING -->
+  <section class="slide" id="slide-11" data-label="Итог">
+    <div class="eyebrow">Итог</div>
+    <h1 style="font-size:66px">Ценность среды — не в количестве<br>подключений, а в том, что каждое<br>закрывает конкретный шаг</h1>
+    <div class="rule"></div>
+    <div class="cols c2">
+      <ul class="clean">
+        <li><strong>AGENTS.md</strong> — правила.</li>
+        <li><strong>skill</strong> — процедуру проверки.</li>
+        <li><strong>MCP</strong> — доступ к данным приложения.</li>
+        <li><strong>hook</strong> — контроль качества сразу после правки.</li>
+      </ul>
+      <div>
+        <div class="lbl">файлы (кликабельно)</div>
+        <div class="term sm" style="line-height:1.9">
+<a class="lnk" href="AGENTS.md">AGENTS.md</a> · <a class="lnk" href="opencode.json">opencode.json</a>
+<a class="lnk" href=".opencode/skills/taskflow-verify/SKILL.md">.opencode/skills/taskflow-verify/SKILL.md</a>
+<a class="lnk" href="mcp/taskflow-server.mjs">mcp/taskflow-server.mjs</a>
+<a class="lnk" href=".opencode/plugins/taskflow-check.js">.opencode/plugins/taskflow-check.js</a>
+<a class="lnk" href="scripts/verify.sh">scripts/verify.sh</a> · <a class="lnk" href="reflection.md">reflection.md</a>
+<a class="lnk" href="README.md">README.md</a>
+        </div>
+      </div>
+    </div>
+    <div class="grow"></div>
+    <div class="chrome"><span>Практика 4 · защита</span><span class="bar"></span><span class="cnt"></span></div>
+  </section>
+
+</main>
+
+<nav class="nav" aria-label="Навигация по слайдам">
+  <button id="prev" aria-label="Предыдущий слайд">←</button>
+  <button id="next" aria-label="Следующий слайд">→</button>
+</nav>
+
+<script>
+(function(){
+  var stage = document.getElementById('stage');
+  var slides = Array.prototype.slice.call(stage.querySelectorAll('.slide'));
+  var counters = stage.querySelectorAll('.cnt');
+  var KEY = 'taskflow-defence-slide';
+
+  function clamp(n){ return Math.max(0, Math.min(slides.length - 1, n)); }
+
+  function fit(){
+    var s = Math.min(window.innerWidth / 1920, window.innerHeight / 1080);
+    stage.style.transform = 'translate(-50%,-50%) scale(' + s + ')';
+  }
+
+  function show(n){
+    var i = clamp(n);
+    slides.forEach(function(el, k){ el.classList.toggle('active', k === i); });
+    var label = (i + 1) + ' / ' + slides.length;
+    counters.forEach(function(c){ c.textContent = label; });
+    try { localStorage.setItem(KEY, String(i)); } catch (e) {}
+    if (history.replaceState) history.replaceState(null, '', '#slide-' + (i + 1));
+  }
+
+  var current = function(){
+    return clamp(parseInt((localStorage.getItem(KEY) || '0'), 10) || 0);
+  };
+
+  // deep link wins over localStorage
+  var hash = /^#slide-(\d+)$/.exec(location.hash || '');
+  show(hash ? parseInt(hash[1], 10) - 1 : current());
+
+  document.getElementById('prev').addEventListener('click', function(){ show(current() - 1); });
+  document.getElementById('next').addEventListener('click', function(){ show(current() + 1); });
+
+  window.addEventListener('keydown', function(e){
+    if (e.metaKey || e.ctrlKey || e.altKey) return;
+    switch (e.key) {
+      case 'ArrowRight': case 'PageDown': case ' ': show(current() + 1); e.preventDefault(); break;
+      case 'ArrowLeft':  case 'PageUp':   show(current() - 1); e.preventDefault(); break;
+      case 'Home': show(0); e.preventDefault(); break;
+      case 'End':  show(slides.length - 1); e.preventDefault(); break;
+    }
+  });
+
+  window.addEventListener('hashchange', function(){
+    var m = /^#slide-(\d+)$/.exec(location.hash || '');
+    if (m) show(parseInt(m[1], 10) - 1);
+  });
+  window.addEventListener('resize', fit);
+
+  fit();
+  show(current());
+})();
+</script>
+</body>
+</html>
