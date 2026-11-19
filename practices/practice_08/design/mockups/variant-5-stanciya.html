@@ -1,0 +1,1449 @@
+<!DOCTYPE html>
+<html lang="ru" class="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TaskFlow — станция задач</title>
+<meta name="description" content="Макет TaskFlow: вариант «Станция» на Beer CSS, пять состояний экрана.">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Rubik:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/beercss@3.12.0/dist/cdn/beer.min.css" rel="stylesheet">
+
+<style>
+/* =========================================================
+   Палитра и токены
+   ========================================================= */
+:root{
+  --bg:#070b10;
+  --surface:#0d141c;
+  --tone:#101a24;
+  --tone-2:#16222e;
+  --text:#d7e3ef;
+  --muted:#8aa0b6;
+  --mint:#34d399;
+  --mint-soft:#6ee7b7;
+  --blue:#60a5fa;
+  --violet:#a78bfa;
+  --danger:#f87171;
+  --warn:#fbbf24;
+  --line:rgba(138,160,182,.16);
+  --line-strong:rgba(138,160,182,.30);
+  --font:"Rubik",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+  --shadow-card:0 22px 40px -32px rgba(0,0,0,.95);
+  --shadow-rail:0 30px 60px -45px rgba(0,0,0,.9);
+}
+
+/* Тема Beer CSS: переопределяем Material-роли своими цветами */
+html.dark{
+  --primary:#34d399;
+  --on-primary:#04231a;
+  --primary-container:#0e3a2b;
+  --on-primary-container:#a9f2d6;
+  --secondary:#60a5fa;
+  --on-secondary:#041f3a;
+  --secondary-container:#10304d;
+  --on-secondary-container:#c9e3ff;
+  --tertiary:#a78bfa;
+  --on-tertiary:#1a1030;
+  --tertiary-container:#28204a;
+  --on-tertiary-container:#ded3ff;
+  --error:#f87171;
+  --on-error:#310808;
+  --error-container:#3d1414;
+  --on-error-container:#ffd2d2;
+  --background:#070b10;
+  --on-background:#d7e3ef;
+  --surface:#0d141c;
+  --on-surface:#d7e3ef;
+  --surface-variant:#16232f;
+  --on-surface-variant:#8aa0b6;
+  --surface-dim:#070b10;
+  --surface-bright:#1b2937;
+  --surface-container-lowest:#070b10;
+  --surface-container-low:#0d141c;
+  --surface-container:#101a24;
+  --surface-container-high:#16222e;
+  --surface-container-highest:#1b2937;
+  --outline:#3a4d60;
+  --outline-variant:#22313f;
+  --inverse-surface:#d7e3ef;
+  --inverse-on-surface:#0a1119;
+  --inverse-primary:#0c7454;
+  --overlay:rgba(3,7,11,.74);
+  color-scheme:dark;
+  background-color:#070b10;
+  --font:var(--font);
+}
+
+/* =========================================================
+   База
+   ========================================================= */
+*,*::before,*::after{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  min-block-size:100vh;
+  background:var(--bg);
+  color:var(--text);
+  font-family:var(--font);
+  font-size:15px;
+  line-height:1.5;
+  letter-spacing:0;
+  -webkit-font-smoothing:antialiased;
+  text-rendering:optimizeLegibility;
+}
+h1,h2,h3,p{margin:0}
+button{white-space:nowrap}
+[hidden]{display:none!important}
+.sr-only{
+  position:absolute;inline-size:1px;block-size:1px;padding:0;margin:-1px;
+  overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0;
+}
+
+/* Видимый фокус — обязательное требование */
+button:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+dialog:focus-visible{
+  outline:2px solid var(--mint)!important;
+  outline-offset:2px!important;
+}
+
+::selection{background:rgba(52,211,153,.28);color:#f2fffa}
+
+/* =========================================================
+   Каркас станции
+   ========================================================= */
+.station{
+  display:grid;
+  grid-template-columns:296px minmax(0,1fr);
+  gap:16px;
+  align-items:start;
+  max-inline-size:1440px;
+  margin:0 auto;
+  padding:16px;
+}
+
+/* ---------- Левая стойка: бренд, секторы, сводка ---------- */
+.rail{
+  position:sticky;
+  top:16px;
+  block-size:calc(100vh - 32px);
+  display:flex;
+  flex-direction:column;
+  gap:20px;
+  padding:20px 18px 18px;
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--r-lg,20px);
+  box-shadow:var(--shadow-rail);
+  overflow-y:auto;
+  scrollbar-width:thin;
+  scrollbar-color:#26384a transparent;
+}
+.rail::-webkit-scrollbar{inline-size:6px}
+.rail::-webkit-scrollbar-thumb{background:#26384a;border-radius:3px}
+
+.brand{display:flex;align-items:center;gap:12px;padding:2px 2px 0}
+.mark{
+  position:relative;flex:none;
+  inline-size:44px;block-size:44px;
+  border-radius:50%;
+  display:grid;place-items:center;
+  background:radial-gradient(circle at 34% 28%,rgba(52,211,153,.18),rgba(13,20,28,.92) 68%);
+  border:1px solid rgba(52,211,153,.38);
+  box-shadow:inset 0 0 14px rgba(52,211,153,.12);
+}
+.mark::before{
+  content:"";position:absolute;inset:4px;border-radius:50%;
+  border:1px solid rgba(96,165,250,.5);
+  transform:rotate(-28deg) scaleY(.42);
+}
+.mark::after{
+  content:"";inline-size:9px;block-size:9px;border-radius:50%;
+  background:var(--mint);
+  box-shadow:0 0 14px rgba(52,211,153,.85);
+}
+.brand-text{min-inline-size:0}
+.brand-name{
+  display:block;font-size:18px;font-weight:600;letter-spacing:.01em;
+  color:#eef6fd;line-height:1.2;
+}
+.brand-sub{
+  display:block;margin-block-start:2px;
+  font-size:11.5px;line-height:1.4;color:var(--muted);
+}
+
+.rail-sep{block-size:1px;background:var(--line);margin:0 -2px}
+
+.eyebrow{
+  font-family:var(--mono);
+  font-size:10px;
+  line-height:1.4;
+  font-weight:500;
+  letter-spacing:.16em;
+  text-transform:uppercase;
+  color:#7d93a9;
+}
+
+/* Секторы-фильтры */
+.sectors{display:flex;flex-direction:column;gap:10px}
+.sectors .eyebrow{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.sectors .eyebrow span{color:#5d7488;font-size:9px;letter-spacing:.12em}
+.sector-nav{display:flex;flex-direction:column;gap:4px}
+
+.sector-nav .sector{
+  margin:0;
+  inline-size:100%;
+  block-size:44px;
+  padding:0 10px 0 12px;
+  border-radius:12px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  background:transparent;
+  border:1px solid transparent;
+  color:#c6d5e3;
+  font-family:var(--font);
+  font-size:14px;
+  font-weight:400;
+  letter-spacing:0;
+  text-align:left;
+  transition:background-color .16s ease,border-color .16s ease,color .16s ease;
+}
+.sector-nav .sector:hover{background:rgba(138,160,182,.07);color:#e2ecf5}
+.sector-name{display:flex;align-items:center;gap:10px;min-inline-size:0}
+.sector-name .marker{
+  inline-size:6px;block-size:6px;border-radius:2px;
+  background:#40566a;flex:none;
+  transition:background-color .16s ease,box-shadow .16s ease;
+}
+.sector[aria-pressed="true"]{
+  background:rgba(52,211,153,.10);
+  border-color:rgba(52,211,153,.28);
+  color:#eafff6;
+  font-weight:500;
+}
+.sector[aria-pressed="true"] .marker{
+  background:var(--mint);
+  box-shadow:0 0 10px rgba(52,211,153,.75);
+}
+.sector .count{
+  font-family:var(--mono);
+  font-size:11.5px;
+  line-height:1;
+  color:#93a9bd;
+  background:rgba(138,160,182,.10);
+  border-radius:7px;
+  padding:5px 7px;
+  min-inline-size:24px;
+  text-align:center;
+}
+.sector[aria-pressed="true"] .count{
+  color:var(--mint-soft);
+  background:rgba(52,211,153,.16);
+}
+
+/* Сводка-телеметрия */
+.telemetry{display:flex;flex-direction:column;gap:12px}
+.tel-rows{display:flex;flex-direction:column;gap:2px}
+.tel-row{
+  display:flex;align-items:baseline;justify-content:space-between;gap:12px;
+  padding:8px 2px;
+  border-block-end:1px solid rgba(138,160,182,.09);
+}
+.tel-row:last-child{border-block-end:none}
+.tel-row span{font-size:13px;color:#9db1c5}
+.tel-row b{
+  font-family:var(--mono);
+  font-size:19px;
+  line-height:1;
+  font-weight:500;
+  color:#e6f0fa;
+  letter-spacing:-.01em;
+}
+.tel-row b.ok{color:var(--mint-soft)}
+.tel-row b.dim{color:var(--blue)}
+
+.tel-track{display:flex;gap:3px;block-size:6px}
+.tel-track i{flex:1;border-radius:2px;background:rgba(138,160,182,.16)}
+.tel-track i.on{background:rgba(52,211,153,.75)}
+.tel-track i.done{background:rgba(96,165,250,.55)}
+
+/* =========================================================
+   Рабочая область
+   ========================================================= */
+.deck{min-inline-size:0;padding:2px 2px 12px}
+
+.topbar{
+  display:flex;
+  align-items:flex-end;
+  justify-content:space-between;
+  gap:18px;
+  flex-wrap:wrap;
+  padding:2px 2px 0;
+}
+.titles{min-inline-size:0}
+.titles .eyebrow{margin-block-end:7px}
+.page-title{
+  font-size:27px;
+  line-height:1.1;
+  font-weight:600;
+  letter-spacing:-.012em;
+  color:#eef6fd;
+}
+.top-actions{display:flex;align-items:flex-end;gap:10px;flex-wrap:wrap}
+
+.cap{
+  display:block;
+  font-family:var(--mono);
+  font-size:10px;
+  line-height:1.4;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:#7d93a9;
+}
+
+.search{display:flex;flex-direction:column;gap:6px;inline-size:270px}
+.search .field{
+  margin:0;
+  block-size:44px;
+  border:1px solid var(--line);
+  border-radius:12px;
+  background:rgba(255,255,255,.02);
+  transition:border-color .16s ease,box-shadow .16s ease,background-color .16s ease;
+}
+.search .field:focus-within{
+  border-color:rgba(52,211,153,.55);
+  box-shadow:0 0 0 3px rgba(52,211,153,.10);
+  background:rgba(255,255,255,.035);
+}
+.search .field>input{
+  inline-size:100%;
+  block-size:100%;
+  padding:0 13px;
+  background:transparent;
+  border:none;
+  color:var(--text);
+  font-family:var(--font);
+  font-size:14px;
+  letter-spacing:0;
+  outline:none;
+}
+.search .field>input::placeholder{color:#7d93a9}
+
+.btn-primary{
+  margin:0;
+  block-size:44px;
+  inline-size:auto;
+  border-radius:12px;
+  padding:0 18px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  background:var(--mint);
+  border:1px solid rgba(52,211,153,.6);
+  color:#04231a;
+  font-family:var(--font);
+  font-size:14px;
+  font-weight:600;
+  letter-spacing:0;
+  box-shadow:0 14px 26px -18px rgba(52,211,153,.9);
+  transition:background-color .15s ease,transform .15s ease,box-shadow .15s ease;
+}
+.btn-primary:hover{background:#3fe0a6;box-shadow:0 16px 30px -18px rgba(52,211,153,1)}
+.btn-primary:active{transform:translateY(1px)}
+
+.btn-ghost{
+  margin:0;
+  block-size:44px;
+  inline-size:auto;
+  border-radius:12px;
+  padding:0 16px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  background:rgba(138,160,182,.06);
+  border:1px solid var(--line);
+  color:#c6d5e3;
+  font-family:var(--font);
+  font-size:14px;
+  font-weight:500;
+  letter-spacing:0;
+  transition:background-color .15s ease,border-color .15s ease,color .15s ease;
+}
+.btn-ghost:hover{background:rgba(138,160,182,.12);border-color:var(--line-strong);color:#e6f0fa}
+
+/* ---------- Уведомление ---------- */
+.toast{
+  position:relative;
+  inset:auto;
+  transform:none;
+  inline-size:100%;
+  margin:18px 0 0;
+  padding:11px 10px 11px 14px;
+  display:flex;
+  align-items:center;
+  gap:10px;
+  border-radius:14px;
+  background:rgba(52,211,153,.075);
+  border:1px solid rgba(52,211,153,.26);
+  color:#cfeee1;
+  box-shadow:none;
+  visibility:visible;
+  opacity:1;
+  font-size:13.5px;
+  line-height:1.4;
+}
+.toast.active{transform:none;opacity:1;visibility:visible}
+.toast .toast-dot{
+  inline-size:8px;block-size:8px;border-radius:50%;
+  background:var(--mint);box-shadow:0 0 10px rgba(52,211,153,.85);
+  flex:none;
+}
+.toast .max{flex:1;min-inline-size:0}
+.toast button{
+  margin:0;
+  block-size:32px;
+  inline-size:auto;
+  padding:0 10px;
+  border-radius:8px;
+  background:transparent;
+  border:1px solid transparent;
+  color:#9fe4c9;
+  font-family:var(--font);
+  font-size:12.5px;
+  font-weight:500;
+  letter-spacing:0;
+}
+.toast button:hover{background:rgba(52,211,153,.14);color:#eafff6}
+
+/* ---------- Заголовок списка ---------- */
+.list-head{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  margin:22px 2px 12px;
+}
+.list-count{
+  font-family:var(--mono);
+  font-size:11px;
+  letter-spacing:.04em;
+  color:#7d93a9;
+}
+
+/* =========================================================
+   Карточки задач
+   ========================================================= */
+.task-list{display:flex;flex-direction:column;gap:12px}
+
+.card.task{
+  position:relative;
+  display:grid;
+  grid-template-columns:24px minmax(0,1fr) auto;
+  gap:14px 16px;
+  align-items:start;
+  margin:0;
+  padding:18px 18px 18px 22px;
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:18px;
+  box-shadow:var(--shadow-card);
+  transition:border-color .18s ease,background-color .18s ease,transform .18s ease;
+}
+.card.task:hover{
+  border-color:rgba(138,160,182,.28);
+  background:#0e1620;
+}
+.task::before{
+  content:"";
+  position:absolute;
+  inset-block:15px;
+  inset-inline-start:0;
+  inline-size:3px;
+  border-start-end-radius:3px;
+  border-end-end-radius:3px;
+  background:var(--accent,var(--mint));
+  opacity:.9;
+}
+
+.task-check{padding-block-start:2px;display:flex;justify-content:center}
+.task-main{min-inline-size:0}
+
+.task-top{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:10px 14px;
+  flex-wrap:wrap;
+}
+.task-title{
+  font-size:16px;
+  line-height:1.35;
+  font-weight:600;
+  letter-spacing:-.005em;
+  color:#e8f1fa;
+  margin:0;
+}
+.task-desc{
+  margin:6px 0 0;
+  font-size:14px;
+  line-height:1.45;
+  color:var(--muted);
+}
+.task-meta{
+  margin:11px 0 0;
+  display:flex;
+  align-items:center;
+  gap:8px;
+  flex-wrap:wrap;
+  font-family:var(--mono);
+  font-size:11.5px;
+  letter-spacing:.02em;
+  color:#7d93a9;
+}
+.task-meta .meta-dot{
+  inline-size:3px;block-size:3px;border-radius:50%;
+  background:#3d5266;flex:none;
+}
+.task-meta b{font-weight:500;color:#a9bccd}
+
+/* Бейдж срока — компонент badge в режиме none */
+.badge.due{
+  position:static;
+  inset:auto;
+  transform:none;
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  margin:1px 0 0;
+  padding:3px 9px;
+  min-inline-size:0;
+  min-block-size:0;
+  border-radius:999px;
+  background:rgba(52,211,153,.10);
+  border:1px solid rgba(52,211,153,.24);
+  color:var(--mint-soft);
+  font-family:var(--mono);
+  font-size:11px;
+  line-height:1.5;
+  font-weight:400;
+  letter-spacing:.02em;
+  text-transform:none;
+}
+.badge.due::before{
+  content:"";
+  inline-size:5px;block-size:5px;border-radius:50%;
+  background:currentColor;opacity:.9;
+}
+.badge.due.now{
+  background:rgba(251,191,36,.12);
+  border-color:rgba(251,191,36,.34);
+  color:#fbbf24;
+}
+.badge.due.past{
+  background:rgba(138,160,182,.08);
+  border-color:rgba(138,160,182,.20);
+  color:#93a9bd;
+}
+
+.task-actions{display:flex;align-items:flex-start;gap:8px}
+.task-actions button{
+  margin:0;
+  block-size:34px;
+  inline-size:auto;
+  padding:0 13px;
+  border-radius:10px;
+  background:rgba(138,160,182,.06);
+  border:1px solid var(--line);
+  color:#c3d2e0;
+  font-family:var(--font);
+  font-size:12.5px;
+  font-weight:500;
+  letter-spacing:0;
+  transition:background-color .15s ease,border-color .15s ease,color .15s ease;
+}
+.task-actions button:hover{
+  background:rgba(138,160,182,.12);
+  border-color:var(--line-strong);
+  color:#e6f0fa;
+}
+.task-actions .danger{
+  color:#fca5a5;
+  border-color:rgba(248,113,113,.30);
+  background:rgba(248,113,113,.06);
+}
+.task-actions .danger:hover{
+  background:rgba(248,113,113,.14);
+  border-color:rgba(248,113,113,.52);
+  color:#ffc9c9;
+}
+
+/* done */
+.card.task.is-done{background:#0c131b}
+.card.task.is-done::before{background:#41566a;opacity:.7}
+.card.task.is-done .task-title{
+  color:#93a7ba;
+  text-decoration:line-through;
+  text-decoration-thickness:1.5px;
+  text-decoration-color:rgba(147,167,186,.6);
+}
+.card.task.is-done .task-desc{color:#6f8598}
+.card.task.is-done .task-meta{color:#66798c}
+
+/* Чекбокс: компонент Beer CSS, глиф заменён на CSS-рамку */
+.checkbox{margin:0;padding:0;display:inline-flex}
+.checkbox>input{position:absolute;inline-size:22px;block-size:22px;margin:0}
+.checkbox>span{
+  display:inline-flex;align-items:center;justify-content:center;
+  inline-size:24px;block-size:24px;
+}
+.checkbox>span:before{
+  content:"" !important;
+  display:block;
+  inline-size:20px;block-size:20px;
+  border:1.5px solid #3f566a;
+  border-radius:7px;
+  background-color:transparent;
+  background-repeat:no-repeat;
+  background-position:center;
+  background-size:13px 13px;
+  transition:background-color .15s ease,border-color .15s ease,box-shadow .15s ease;
+}
+.checkbox:hover>span:before{border-color:rgba(52,211,153,.6)}
+.checkbox>input:checked+span:before{
+  background-color:var(--mint);
+  border-color:var(--mint);
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2305231a' stroke-width='3.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 12.6 9.4 18 20 6.6'/%3E%3C/svg%3E");
+}
+.checkbox>input:indeterminate+span:before{
+  background-color:rgba(52,211,153,.5);
+  border-color:var(--mint);
+}
+.checkbox>input:focus-visible+span:before{
+  box-shadow:0 0 0 3px rgba(52,211,153,.25);
+  outline:2px solid var(--mint);
+  outline-offset:2px;
+}
+
+/* =========================================================
+   Состояния: загрузка / пусто / ошибка
+   ========================================================= */
+.pane{margin:0}
+
+.state-note{
+  display:flex;align-items:center;gap:9px;
+  margin:0 2px 12px;
+  font-family:var(--mono);
+  font-size:11.5px;
+  letter-spacing:.03em;
+  color:#8aa0b6;
+}
+.state-note::before{
+  content:"";inline-size:5px;block-size:5px;border-radius:50%;
+  background:var(--blue);
+  animation:blink 1.4s ease-in-out infinite;
+}
+
+.skeleton-list{display:flex;flex-direction:column;gap:12px}
+.sk-card{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:18px;
+  padding:20px 22px;
+  display:flex;flex-direction:column;gap:11px;
+}
+.sk{
+  block-size:11px;border-radius:5px;
+  background:rgba(138,160,182,.12);
+  animation:skPulse 1.9s ease-in-out infinite;
+}
+.sk.sk-title{block-size:15px;inline-size:44%;border-radius:6px}
+.sk.sk-desc{inline-size:82%}
+.sk.sk-meta{inline-size:26%;block-size:9px;animation-delay:.2s}
+.sk:nth-child(2){animation-delay:.12s}
+.sk-card:nth-child(2) .sk{animation-delay:.14s}
+.sk-card:nth-child(3) .sk{animation-delay:.28s}
+
+.state{
+  min-block-size:430px;
+  padding:52px 28px;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  text-align:center;
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:20px;
+}
+.state h2{
+  font-size:20px;
+  line-height:1.3;
+  font-weight:600;
+  letter-spacing:-.01em;
+  color:#eaf3fb;
+  margin:0 0 8px;
+}
+.state p{
+  max-inline-size:42ch;
+  margin:0 0 22px;
+  font-size:14px;
+  line-height:1.6;
+  color:var(--muted);
+}
+.state-figure{
+  position:relative;
+  inline-size:88px;block-size:88px;
+  margin:0 auto 22px;
+  border-radius:50%;
+  display:grid;place-items:center;
+  border:1px dashed rgba(138,160,182,.32);
+}
+.state-figure::before{
+  content:"";
+  position:absolute;
+  inline-size:40px;block-size:40px;
+  border-radius:50%;
+  border:1px solid rgba(52,211,153,.42);
+  transform:rotate(-24deg) scaleY(.5);
+}
+.state-figure::after{
+  content:"";
+  inline-size:10px;block-size:10px;
+  border-radius:50%;
+  background:var(--mint);
+  box-shadow:0 0 18px rgba(52,211,153,.75);
+}
+.state.is-error .state-figure{border-color:rgba(248,113,113,.32)}
+.state.is-error .state-figure::before{border-color:rgba(248,113,113,.4)}
+.state.is-error .state-figure::after{
+  background:var(--danger);
+  box-shadow:0 0 18px rgba(248,113,113,.65);
+}
+
+/* =========================================================
+   Диалог
+   ========================================================= */
+.task-dialog{
+  inline-size:min(556px,calc(100vw - 28px));
+  max-inline-size:calc(100vw - 28px);
+  max-block-size:calc(100vh - 28px);
+  margin:0;
+  padding:0;
+  inset:50% auto auto 50%;
+  transform:translate(-50%,-50%) scale(.98);
+  opacity:0;
+  visibility:hidden;
+  overflow-y:auto;
+  border:1px solid rgba(138,160,182,.20);
+  border-radius:20px;
+  background:var(--surface);
+  color:var(--text);
+  box-shadow:0 50px 90px -40px #000;
+  transition:opacity .18s ease,transform .18s ease,visibility .18s ease;
+}
+.task-dialog[open]{
+  opacity:1;
+  visibility:visible;
+  transform:translate(-50%,-50%) scale(1);
+}
+.task-dialog::backdrop{
+  background:rgba(3,7,11,.74);
+  backdrop-filter:blur(3px);
+  opacity:1;
+  visibility:visible;
+}
+
+.dlg-head{
+  padding:22px 24px 0;
+  display:flex;
+  flex-direction:column;
+  gap:7px;
+}
+.dlg-head h2{
+  margin:0;
+  font-size:21px;
+  line-height:1.25;
+  font-weight:600;
+  letter-spacing:-.01em;
+  color:#eef6fd;
+}
+.dlg-body{
+  padding:22px 24px 4px;
+  display:flex;
+  flex-direction:column;
+  gap:18px;
+}
+.form-row{display:flex;flex-direction:column;gap:7px}
+.form-row .cap{color:#93a9bd}
+.form-row .field{
+  margin:0;
+  block-size:46px;
+  border:1px solid var(--line);
+  border-radius:12px;
+  background:rgba(255,255,255,.02);
+  transition:border-color .16s ease,box-shadow .16s ease,background-color .16s ease;
+}
+.form-row .field:focus-within{
+  border-color:rgba(52,211,153,.55);
+  box-shadow:0 0 0 3px rgba(52,211,153,.10);
+  background:rgba(255,255,255,.035);
+}
+.form-row .field.invalid{
+  border-color:rgba(248,113,113,.62);
+  background:rgba(248,113,113,.05);
+  box-shadow:0 0 0 3px rgba(248,113,113,.08);
+}
+.form-row .field>input,
+.form-row .field>textarea{
+  inline-size:100%;
+  block-size:100%;
+  padding:0 14px;
+  background:transparent;
+  border:none;
+  outline:none;
+  color:var(--text);
+  font-family:var(--font);
+  font-size:14px;
+  line-height:1.4;
+  letter-spacing:0;
+}
+.form-row .field>input::placeholder,
+.form-row .field>textarea::placeholder{color:#71879b}
+.form-row .field.textarea{
+  block-size:98px;
+  padding-block:7px;
+}
+.form-row .field.textarea>textarea{
+  padding:4px 14px;
+  resize:none;
+  overflow-y:auto;
+}
+.form-row .field>input[type="date"]{color-scheme:dark}
+
+.field-error{
+  display:flex;
+  align-items:center;
+  gap:6px;
+  margin:0;
+  font-family:var(--font);
+  font-size:12.5px;
+  line-height:1.4;
+  color:#fca5a5;
+}
+.field-error::before{
+  content:"";
+  inline-size:5px;block-size:5px;border-radius:50%;
+  background:currentColor;flex:none;
+}
+.field-error[hidden]{display:none}
+
+.dlg-foot{
+  display:flex;
+  align-items:center;
+  justify-content:flex-end;
+  gap:10px;
+  margin-block-start:22px;
+  padding:18px 24px 20px;
+  border-block-start:1px solid var(--line);
+  background:rgba(255,255,255,.014);
+}
+.dlg-foot .btn-ghost,
+.dlg-foot .btn-primary{block-size:42px;font-size:13.5px;border-radius:11px}
+
+/* =========================================================
+   Панель макета
+   ========================================================= */
+.mock-panel{
+  margin-block-start:auto;
+  padding:11px 11px 12px;
+  border-radius:13px;
+  background:#05080c;
+  border:1px dashed rgba(138,160,182,.24);
+}
+.mock-title{
+  margin:0 0 8px;
+  font-family:var(--mono);
+  font-size:10px;
+  line-height:1.2;
+  letter-spacing:.2em;
+  color:#7d93a9;
+}
+.mock-actions{display:flex;flex-wrap:wrap;gap:4px}
+.mock-panel .mock-btn{
+  margin:0;
+  block-size:26px;
+  inline-size:auto;
+  padding:0 8px;
+  border-radius:6px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  background:transparent;
+  border:1px solid rgba(138,160,182,.18);
+  color:#9fb3c6;
+  font-family:var(--mono);
+  font-size:10.5px;
+  font-weight:400;
+  letter-spacing:.02em;
+  transition:background-color .15s ease,border-color .15s ease,color .15s ease;
+}
+.mock-panel .mock-btn:hover{background:rgba(138,160,182,.10);color:#dfeaf4;border-color:rgba(138,160,182,.32)}
+.mock-panel .mock-btn[aria-pressed="true"]{
+  background:rgba(52,211,153,.15);
+  border-color:rgba(52,211,153,.46);
+  color:#b9f6de;
+}
+
+/* =========================================================
+   Анимации
+   ========================================================= */
+@keyframes skPulse{
+  0%,100%{opacity:.45}
+  50%{opacity:1}
+}
+@keyframes blink{
+  0%,100%{opacity:.35}
+  50%{opacity:1}
+}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{
+    animation-duration:.001ms!important;
+    animation-iteration-count:1!important;
+    transition-duration:.001ms!important;
+  }
+}
+
+/* =========================================================
+   Адаптив
+   ========================================================= */
+@media (max-width:1080px){
+  .station{grid-template-columns:262px minmax(0,1fr);gap:14px;padding:14px}
+  .rail{padding:18px 15px 15px;block-size:calc(100vh - 28px);top:14px}
+  .search{inline-size:240px}
+  .card.task{grid-template-columns:24px minmax(0,1fr);}
+  .task-actions{grid-column:1 / -1;justify-content:flex-start;padding-inline-start:38px}
+}
+
+@media (max-width:860px){
+  .station{
+    grid-template-columns:minmax(0,1fr);
+    padding:10px 10px 104px;
+    gap:10px;
+  }
+  .rail{
+    position:static;
+    block-size:auto;
+    overflow:visible;
+    padding:14px;
+    gap:14px;
+    border-radius:16px;
+  }
+  .brand-name{font-size:17px}
+  .rail-sep{display:none}
+  .sectors{gap:8px}
+  .sector-nav .sector{block-size:40px}
+
+  .telemetry{gap:8px}
+  .tel-rows{flex-direction:row;gap:0}
+  .tel-row{
+    flex:1;
+    flex-direction:column-reverse;
+    align-items:flex-start;
+    justify-content:flex-end;
+    gap:3px;
+    padding:2px 10px;
+    border-block-end:none;
+    border-inline-start:1px solid rgba(138,160,182,.12);
+  }
+  .tel-row:first-child{padding-inline-start:0;border-inline-start:none}
+  .tel-row span{font-size:11px}
+  .tel-row b{font-size:17px}
+
+  .topbar{align-items:stretch;gap:14px}
+  .titles{inline-size:100%}
+  .page-title{font-size:23px}
+  .top-actions{inline-size:100%;gap:10px}
+  .search{inline-size:auto;flex:1 1 100%}
+  .btn-primary{inline-size:100%}
+
+  .card.task{padding:16px 14px 16px 18px;gap:12px 12px;border-radius:16px}
+  .task-actions{padding-inline-start:36px;flex-wrap:wrap}
+  .task-actions button{block-size:36px;padding:0 14px;font-size:13px}
+  .task-top{gap:8px}
+  .task-title{font-size:15.5px}
+  .task-desc{font-size:13.5px}
+
+  .list-head{margin:18px 2px 10px}
+  .state{min-block-size:360px;padding:38px 20px}
+
+  .mock-panel{
+    position:fixed;
+    inset:auto 10px 10px 10px;
+    z-index:60;
+    margin:0;
+    padding:9px 10px 10px;
+    background:#05080c;
+    box-shadow:0 20px 40px -18px rgba(0,0,0,.95);
+  }
+  .mock-title{margin-block-end:6px}
+  .mock-panel .mock-btn{block-size:28px;font-size:10.5px;flex:1 1 auto;padding:0 6px}
+
+  .task-dialog{
+    inline-size:calc(100vw - 20px);
+    max-inline-size:calc(100vw - 20px);
+    max-block-size:calc(100vh - 20px);
+    border-radius:18px;
+  }
+  .dlg-head{padding:18px 18px 0}
+  .dlg-head h2{font-size:19px}
+  .dlg-body{padding:18px 18px 2px;gap:16px}
+  .dlg-foot{padding:15px 18px 17px;gap:8px}
+  .dlg-foot .btn-ghost{flex:0 0 auto}
+  .dlg-foot .btn-primary{flex:1 1 auto}
+}
+
+@media (max-width:400px){
+  .page-title{font-size:21px}
+  .task-actions{padding-inline-start:0}
+  .task-actions button{flex:1 1 0;justify-content:center}
+  .mock-panel .mock-btn{font-size:9.5px;letter-spacing:0}
+  .state p{font-size:13.5px}
+}
+</style>
+</head>
+<body>
+
+<div class="station">
+
+  <!-- ===================== ЛЕВАЯ СТОЙКА ===================== -->
+  <aside class="rail">
+
+    <div class="brand">
+      <span class="mark" aria-hidden="true"></span>
+      <span class="brand-text">
+        <span class="brand-name">TaskFlow</span>
+        <span class="brand-sub">учебные задачи</span>
+      </span>
+    </div>
+
+    <div class="rail-sep" aria-hidden="true"></div>
+
+    <section class="sectors" aria-labelledby="sectors-title">
+      <p class="eyebrow" id="sectors-title">Секторы <span>08</span></p>
+      <nav class="sector-nav" aria-label="Фильтры задач">
+        <button class="sector" type="button" data-filter="all" aria-pressed="true">
+          <span class="sector-name"><span class="marker" aria-hidden="true"></span>Все</span>
+          <span class="count">8</span>
+        </button>
+        <button class="sector" type="button" data-filter="active" aria-pressed="false">
+          <span class="sector-name"><span class="marker" aria-hidden="true"></span>Активные</span>
+          <span class="count">5</span>
+        </button>
+        <button class="sector" type="button" data-filter="done" aria-pressed="false">
+          <span class="sector-name"><span class="marker" aria-hidden="true"></span>Выполненные</span>
+          <span class="count">3</span>
+        </button>
+      </nav>
+    </section>
+
+    <section class="telemetry" aria-labelledby="summary-title">
+      <p class="eyebrow" id="summary-title">Сводка</p>
+      <div class="tel-rows">
+        <div class="tel-row"><span>Всего</span> <b>8</b></div>
+        <div class="tel-row"><span>Активных</span> <b class="ok">5</b></div>
+        <div class="tel-row"><span>Выполнено</span> <b class="dim">3</b></div>
+      </div>
+      <div class="tel-track" aria-hidden="true">
+        <i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i>
+        <i class="done"></i><i class="done"></i><i class="done"></i>
+      </div>
+    </section>
+
+    <div class="mock-panel" role="group" aria-label="Переключатель состояний макета">
+      <p class="mock-title">МАКЕТ</p>
+      <div class="mock-actions">
+        <button class="mock-btn" type="button" data-state="list" aria-pressed="true">Список</button>
+        <button class="mock-btn" type="button" data-state="loading" aria-pressed="false">Загрузка</button>
+        <button class="mock-btn" type="button" data-state="empty" aria-pressed="false">Пусто</button>
+        <button class="mock-btn" type="button" data-state="error" aria-pressed="false">Ошибка</button>
+        <button class="mock-btn" type="button" data-state="dialog" aria-pressed="false">Диалог</button>
+      </div>
+    </div>
+
+  </aside>
+
+  <!-- ===================== РАБОЧАЯ ОБЛАСТЬ ===================== -->
+  <main class="deck" data-view="list">
+
+    <header class="topbar">
+      <div class="titles">
+        <p class="eyebrow">Пульт · станция TF-08</p>
+        <h1 class="page-title">Задачи</h1>
+      </div>
+
+      <div class="top-actions">
+        <div class="search">
+          <label class="cap" for="task-search">Поиск</label>
+          <div class="field border round" id="search-field">
+            <input id="task-search" type="search" placeholder="Найти задачу…" autocomplete="off">
+          </div>
+        </div>
+        <button class="btn-primary" type="button" data-open-dialog>Новая задача</button>
+      </div>
+    </header>
+
+    <div class="snackbar toast active" id="toast" role="status" aria-live="polite">
+      <span class="toast-dot" aria-hidden="true"></span>
+      <span class="max">Задача создана</span>
+      <button type="button" id="toast-close">Закрыть</button>
+    </div>
+
+    <div class="list-head" id="list-head">
+      <p class="eyebrow">Список задач</p>
+      <span class="list-count" id="list-count">Показано 4 из 8</span>
+    </div>
+
+    <!-- ---------- Состояние: список ---------- -->
+    <section class="pane" data-pane="list" aria-label="Список задач">
+
+      <div class="task-list" id="task-list">
+
+        <article class="card task" style="--accent:#34d399" data-done="false">
+          <div class="task-check">
+            <label class="checkbox">
+              <input type="checkbox" aria-label="Отметить задачу «Сдать лабораторную по ИИ» выполненной">
+              <span></span>
+            </label>
+          </div>
+          <div class="task-main">
+            <div class="task-top">
+              <h2 class="task-title">Сдать лабораторную по ИИ</h2>
+              <span class="badge due"><span class="sr-only">Срок: </span>21 ноя</span>
+            </div>
+            <p class="task-desc">Практика 8: новый фронтенд и клиентские тесты</p>
+            <p class="task-meta">Создана <b>18 ноя</b><span class="meta-dot" aria-hidden="true"></span>Практика</p>
+          </div>
+          <div class="task-actions">
+            <button type="button">Изменить</button>
+            <button type="button" class="danger">Удалить</button>
+          </div>
+        </article>
+
+        <article class="card task" style="--accent:#60a5fa" data-done="false">
+          <div class="task-check">
+            <label class="checkbox">
+              <input type="checkbox" aria-label="Отметить задачу «Подготовить доклад по физкультуре» выполненной">
+              <span></span>
+            </label>
+          </div>
+          <div class="task-main">
+            <div class="task-top">
+              <h2 class="task-title">Подготовить доклад по физкультуре</h2>
+              <span class="badge due"><span class="sr-only">Срок: </span>24 ноя</span>
+            </div>
+            <p class="task-desc">Слайды и текст в Typst, проверить шапку</p>
+            <p class="task-meta">Создана <b>17 ноя</b><span class="meta-dot" aria-hidden="true"></span>Доклад</p>
+          </div>
+          <div class="task-actions">
+            <button type="button">Изменить</button>
+            <button type="button" class="danger">Удалить</button>
+          </div>
+        </article>
+
+        <article class="card task" style="--accent:#fbbf24" data-done="false">
+          <div class="task-check">
+            <label class="checkbox">
+              <input type="checkbox" aria-label="Отметить задачу «Разобрать конспект по матанализу» выполненной">
+              <span></span>
+            </label>
+          </div>
+          <div class="task-main">
+            <div class="task-top">
+              <h2 class="task-title">Разобрать конспект по матанализу</h2>
+              <span class="badge due now"><span class="sr-only">Срок: </span>сегодня</span>
+            </div>
+            <p class="task-desc">Пределы и непрерывность, задачи 1-14</p>
+            <p class="task-meta">Создана <b>16 ноя</b><span class="meta-dot" aria-hidden="true"></span>Конспект</p>
+          </div>
+          <div class="task-actions">
+            <button type="button">Изменить</button>
+            <button type="button" class="danger">Удалить</button>
+          </div>
+        </article>
+
+        <article class="card task is-done" style="--accent:#41566a" data-done="true">
+          <div class="task-check">
+            <label class="checkbox">
+              <input type="checkbox" checked aria-label="Задача «Заполнить БГД по осознанному потреблению» выполнена">
+              <span></span>
+            </label>
+          </div>
+          <div class="task-main">
+            <div class="task-top">
+              <h2 class="task-title">Заполнить БГД по осознанному потреблению</h2>
+              <span class="badge due past"><span class="sr-only">Срок: </span>12 ноя</span>
+            </div>
+            <p class="task-desc">Категории, цифры и сокращения</p>
+            <p class="task-meta">Создана <b>10 ноя</b><span class="meta-dot" aria-hidden="true"></span>БГД</p>
+          </div>
+          <div class="task-actions">
+            <button type="button">Изменить</button>
+            <button type="button" class="danger">Удалить</button>
+          </div>
+        </article>
+
+      </div>
+    </section>
+
+    <!-- ---------- Состояние: загрузка ---------- -->
+    <section class="pane" data-pane="loading" aria-label="Загрузка задач" hidden>
+      <p class="state-note" role="status">Загружаем задачи…</p>
+      <div class="skeleton-list" aria-hidden="true">
+        <div class="sk-card">
+          <div class="sk sk-title"></div>
+          <div class="sk sk-desc"></div>
+          <div class="sk sk-meta"></div>
+        </div>
+        <div class="sk-card">
+          <div class="sk sk-title"></div>
+          <div class="sk sk-desc"></div>
+          <div class="sk sk-meta"></div>
+        </div>
+        <div class="sk-card">
+          <div class="sk sk-title"></div>
+          <div class="sk sk-desc"></div>
+          <div class="sk sk-meta"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ---------- Состояние: пусто ---------- -->
+    <section class="pane" data-pane="empty" aria-label="Пустой список" hidden>
+      <div class="state">
+        <div class="state-figure" aria-hidden="true"></div>
+        <h2>Задач пока нет</h2>
+        <p>Добавьте первую — она появится в этом списке.</p>
+        <button class="btn-primary" type="button" data-open-dialog>Новая задача</button>
+      </div>
+    </section>
+
+    <!-- ---------- Состояние: ошибка ---------- -->
+    <section class="pane" data-pane="error" aria-label="Ошибка загрузки" hidden>
+      <div class="state is-error">
+        <div class="state-figure" aria-hidden="true"></div>
+        <h2>Не удалось загрузить задачи</h2>
+        <p>Сервер не ответил. Проверьте соединение и попробуйте снова.</p>
+        <button class="btn-ghost" type="button" id="retry-btn">Повторить</button>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<!-- ===================== ДИАЛОГ ===================== -->
+<dialog class="task-dialog" id="task-dialog" aria-labelledby="dlg-title" aria-modal="true">
+  <form id="task-form" novalidate>
+    <div class="dlg-head">
+      <p class="eyebrow">Новая запись</p>
+      <h2 id="dlg-title">Новая задача</h2>
+    </div>
+
+    <div class="dlg-body">
+      <div class="form-row">
+        <label class="cap" for="nf-title">Название <span aria-hidden="true">·</span> обязательно</label>
+        <div class="field border" id="title-field">
+          <input id="nf-title" name="title" type="text" placeholder="Например: сдать отчёт по практике"
+                 autocomplete="off" aria-required="true" aria-describedby="title-error">
+        </div>
+        <p class="field-error" id="title-error" role="alert" hidden>Введите название задачи</p>
+      </div>
+
+      <div class="form-row">
+        <label class="cap" for="nf-desc">Описание</label>
+        <div class="field textarea border">
+          <textarea id="nf-desc" name="description" rows="3"
+                    placeholder="Детали, ссылки, что именно сделать"></textarea>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <label class="cap" for="nf-due">Срок</label>
+        <div class="field border">
+          <input id="nf-due" name="due" type="date">
+        </div>
+      </div>
+    </div>
+
+    <div class="dlg-foot">
+      <button class="btn-ghost" type="button" id="dlg-cancel">Отмена</button>
+      <button class="btn-primary" type="submit">Создать задачу</button>
+    </div>
+  </form>
+</dialog>
+
+<script type="module" src="https://cdn.jsdelivr.net/npm/beercss@3.12.0/dist/cdn/beer.min.js"></script>
+<script>
+(function () {
+  "use strict";
+
+  var main = document.querySelector(".deck");
+  var panes = Array.prototype.slice.call(document.querySelectorAll("[data-pane]"));
+  var mockButtons = Array.prototype.slice.call(document.querySelectorAll(".mock-btn"));
+  var sectors = Array.prototype.slice.call(document.querySelectorAll(".sector"));
+  var tasks = Array.prototype.slice.call(document.querySelectorAll(".card.task"));
+  var listCount = document.getElementById("list-count");
+  var listHead = document.getElementById("list-head");
+  var toast = document.getElementById("toast");
+  var toastClose = document.getElementById("toast-close");
+  var dialog = document.getElementById("task-dialog");
+  var form = document.getElementById("task-form");
+  var titleInput = document.getElementById("nf-title");
+  var titleField = document.getElementById("title-field");
+  var titleError = document.getElementById("title-error");
+  var retryBtn = document.getElementById("retry-btn");
+  var cancelBtn = document.getElementById("dlg-cancel");
+  var view = "list";
+  var filter = "all";
+  var retryTimer = null;
+
+  function syncMock(state) {
+    mockButtons.forEach(function (btn) {
+      btn.setAttribute("aria-pressed", String(btn.dataset.state === state));
+    });
+  }
+
+  function setView(next) {
+    if (retryTimer) { clearTimeout(retryTimer); retryTimer = null; }
+    view = next;
+    main.dataset.view = next;
+    panes.forEach(function (pane) {
+      pane.hidden = pane.dataset.pane !== next;
+    });
+    listHead.hidden = next !== "list";
+    toast.hidden = !(next === "list" && !toast.dataset.dismissed);
+    syncMock(next);
+  }
+
+  function setFilter(next) {
+    filter = next;
+    sectors.forEach(function (btn) {
+      btn.setAttribute("aria-pressed", String(btn.dataset.filter === next));
+    });
+    var shown = 0;
+    tasks.forEach(function (card) {
+      var done = card.dataset.done === "true";
+      var visible = next === "all" ? true : (next === "active" ? !done : done);
+      card.hidden = !visible;
+      if (visible) { shown += 1; }
+    });
+    listCount.textContent = "Показано " + shown + " из 8";
+  }
+
+  /* ---------- Диалог ---------- */
+  function clearError() {
+    titleError.hidden = true;
+    titleField.classList.remove("invalid");
+    titleInput.removeAttribute("aria-invalid");
+  }
+
+  function showError() {
+    titleError.hidden = false;
+    titleField.classList.add("invalid");
+    titleInput.setAttribute("aria-invalid", "true");
+  }
+
+  function openDialog() {
+    clearError();
+    if (!dialog.open) { dialog.showModal(); }
+    syncMock("dialog");
+    window.requestAnimationFrame(function () { titleInput.focus(); });
+  }
+
+  function closeDialog() {
+    if (dialog.open) { dialog.close(); }
+  }
+
+  document.querySelectorAll("[data-open-dialog]").forEach(function (btn) {
+    btn.addEventListener("click", openDialog);
+  });
+
+  cancelBtn.addEventListener("click", closeDialog);
+
+  dialog.addEventListener("close", function () {
+    clearError();
+    form.reset();
+    syncMock(view);
+  });
+
+  dialog.addEventListener("click", function (event) {
+    if (event.target === dialog) { closeDialog(); }
+  });
+
+  form.addEventListener("submit", function (event) {
+    event.preventDefault();
+    if (titleInput.value.trim() === "") {
+      showError();
+      titleInput.focus();
+      return;
+    }
+    closeDialog();
+    toast.dataset.dismissed = "false";
+    setView("list");
+    setFilter("all");
+  });
+
+  titleInput.addEventListener("input", function () {
+    if (titleInput.value.trim() !== "") { clearError(); }
+  });
+
+  /* ---------- Уведомление ---------- */
+  toastClose.addEventListener("click", function () {
+    toast.hidden = true;
+    toast.dataset.dismissed = "true";
+  });
+
+  /* ---------- Переключатель макета ---------- */
+  mockButtons.forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      var state = btn.dataset.state;
+      if (state === "dialog") {
+        openDialog();
+      } else {
+        if (dialog.open) { dialog.close(); }
+        setView(state);
+      }
+    });
+  });
+
+  /* ---------- Фильтры ---------- */
+  sectors.forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      setFilter(btn.dataset.filter);
+    });
+  });
+
+  /* ---------- Повторить ---------- */
+  retryBtn.addEventListener("click", function () {
+    setView("loading");
+    retryTimer = window.setTimeout(function () {
+      retryTimer = null;
+      setView("list");
+    }, 900);
+  });
+
+  /* ---------- Стартовое состояние ---------- */
+  toast.dataset.dismissed = "false";
+  setView("list");
+  setFilter("all");
+})();
+</script>
+
+</body>
+</html>
