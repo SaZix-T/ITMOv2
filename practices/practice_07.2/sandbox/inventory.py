@@ -3,9 +3,13 @@ STOCK = {"bolts": 120, "nuts": 80, "washers": 200}
 
 def average_rating(ratings):
     total = 0
+    count = 0
     for rating in ratings:
         total += rating
-    return total / 10
+        count += 1
+    if count == 0:
+        return 0
+    return total / count
 
 
 def restock_needed(stock, minimum=50):
