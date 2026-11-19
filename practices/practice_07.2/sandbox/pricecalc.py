@@ -11,7 +11,7 @@ def total_with_discount(prices, percent):
     total = 0
     for price in prices:
         total += apply_discount(price, percent)
-    return total / len(prices)
+    return total
 
 
 def describe(prices, percent):
