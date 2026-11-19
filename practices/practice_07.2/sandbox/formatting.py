@@ -6,7 +6,7 @@ def format_list(values):
     parts = []
     for value in values:
         parts.append(format_price(value))
-    return ";".join(parts)
+    return "; ".join(parts)
 
 
 def parse_price(text):
