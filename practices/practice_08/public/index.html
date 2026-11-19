@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="ru" data-theme="synthwave">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TaskFlow — учебные задачи</title>
+<meta name="description" content="TaskFlow — список учебных задач: создать, отметить выполненной, изменить и удалить.">
+<meta name="color-scheme" content="dark">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/daisyui@5/daisyui.css" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/daisyui@5/themes.css" rel="stylesheet">
+<link href="/styles/app.css" rel="stylesheet">
+</head>
+<body>
+
+<div class="nebula" aria-hidden="true">
+  <span class="blob blob-violet"></span>
+  <span class="blob blob-rose"></span>
+  <span class="blob blob-cyan"></span>
+  <span class="stars stars-a"></span>
+  <span class="stars stars-b"></span>
+  <span class="vignette"></span>
+</div>
+
+<div class="shell">
+
+  <header class="app-header">
+    <div class="brand">
+      <span class="mark" aria-hidden="true">
+        <span class="mark-core"></span>
+        <span class="mark-ring"></span>
+        <span class="mark-dot"></span>
+      </span>
+      <span class="brand-text">
+        <span class="brand-name">TaskFlow</span>
+        <span class="brand-sub">учебные задачи</span>
+      </span>
+    </div>
+
+    <div class="search-group">
+      <label class="field-label" for="search">Поиск</label>
+      <input id="search" class="input search-input" type="search" placeholder="Найти задачу…"
+             autocomplete="off" data-testid="search">
+    </div>
+
+    <button class="btn new-task" type="button" id="new-task" data-testid="new-task">
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+        <path d="M7 2v10M2 7h10" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/>
+      </svg>
+      Новая задача
+    </button>
+  </header>
+
+  <section class="summary" aria-label="Сводка по задачам">
+    <div class="stat">
+      <span class="stat-label">Всего</span>
+      <span class="stat-value" id="stat-total" data-testid="stat-total">0</span>
+    </div>
+    <div class="stat">
+      <span class="stat-label">Активных</span>
+      <span class="stat-value" id="stat-active" data-testid="stat-active">0</span>
+    </div>
+    <div class="stat">
+      <span class="stat-label">Выполнено</span>
+      <span class="stat-value" id="stat-done" data-testid="stat-done">0</span>
+    </div>
+  </section>
+
+  <div class="filters" role="group" aria-label="Фильтры задач">
+    <button class="btn filter" type="button" data-filter="all" aria-pressed="true" data-testid="filter-all">
+      Все <span class="filter-count" data-count="all">0</span>
+    </button>
+    <button class="btn filter" type="button" data-filter="active" aria-pressed="false" data-testid="filter-active">
+      Активные <span class="filter-count" data-count="active">0</span>
+    </button>
+    <button class="btn filter" type="button" data-filter="done" aria-pressed="false" data-testid="filter-done">
+      Выполненные <span class="filter-count" data-count="done">0</span>
+    </button>
+  </div>
+
+  <div class="alert toast-note" id="toast" role="status" aria-live="polite" data-testid="toast" hidden>
+    <span class="toast-icon" aria-hidden="true">
+      <svg class="ico-ok" width="12" height="12" viewBox="0 0 12 12" fill="none">
+        <path d="M2.2 6.3 4.7 8.8 9.8 3.4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <svg class="ico-err" width="12" height="12" viewBox="0 0 12 12" fill="none">
+        <path d="M6 2.2v4.4M6 9.2v.2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+      </svg>
+    </span>
+    <p class="toast-text" id="toast-text" data-testid="toast-text"></p>
+    <button class="btn toast-close" type="button" id="toast-close" aria-label="Закрыть уведомление">
+      <svg width="10" height="10" viewBox="0 0 10 10" fill="none" aria-hidden="true">
+        <path d="M1.5 1.5 8.5 8.5M8.5 1.5 1.5 8.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+      </svg>
+    </button>
+  </div>
+
+  <main id="main">
+
+    <section class="state" id="state-loading" aria-label="Загрузка задач" data-testid="state-loading" hidden>
+      <p class="loading-line" role="status">
+        <span class="loading loading-spinner loading-xs" aria-hidden="true"></span>
+        Загружаем задачи…
+      </p>
+      <div class="skeleton-list" aria-hidden="true">
+        <div class="skeleton-card">
+          <span class="sk sk-box"></span>
+          <div class="sk-body">
+            <span class="sk sk-line" style="width:56%"></span>
+            <span class="sk sk-line sk-thin" style="width:84%"></span>
+            <span class="sk sk-line sk-thin" style="width:37%"></span>
+          </div>
+        </div>
+        <div class="skeleton-card">
+          <span class="sk sk-box"></span>
+          <div class="sk-body">
+            <span class="sk sk-line" style="width:64%"></span>
+            <span class="sk sk-line sk-thin" style="width:72%"></span>
+            <span class="sk sk-line sk-thin" style="width:44%"></span>
+          </div>
+        </div>
+        <div class="skeleton-card">
+          <span class="sk sk-box"></span>
+          <div class="sk-body">
+            <span class="sk sk-line" style="width:48%"></span>
+            <span class="sk sk-line sk-thin" style="width:88%"></span>
+            <span class="sk sk-line sk-thin" style="width:31%"></span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="state" id="state-error" aria-label="Ошибка загрузки" data-testid="state-error" hidden>
+      <div class="placeholder-panel is-error">
+        <span class="orbit-glyph" aria-hidden="true"><span></span></span>
+        <h2 class="placeholder-title">Не удалось загрузить задачи</h2>
+        <p class="placeholder-text" id="error-message" data-testid="error-message">Сервер не ответил. Проверьте соединение и попробуйте снова.</p>
+        <button class="btn btn-primary" type="button" id="retry" data-testid="retry">Повторить</button>
+      </div>
+    </section>
+
+    <section class="state" id="state-empty" aria-label="Пустой список" data-testid="state-empty" hidden>
+      <div class="placeholder-panel">
+        <span class="orbit-glyph" aria-hidden="true"><span></span></span>
+        <h2 class="placeholder-title" id="empty-title" data-testid="empty-title">Задач пока нет</h2>
+        <p class="placeholder-text" id="empty-text" data-testid="empty-text">Добавьте первую — она появится в этом списке.</p>
+        <button class="btn btn-primary" type="button" id="empty-action" data-testid="empty-action">Новая задача</button>
+      </div>
+    </section>
+
+    <section class="state" id="state-list" aria-label="Список задач" data-testid="state-list" hidden>
+      <ul class="task-list" id="task-list" data-testid="task-list" aria-busy="false"></ul>
+    </section>
+
+  </main>
+</div>
+
+<dialog id="task-dialog" class="modal" aria-labelledby="dialog-title" aria-describedby="dialog-sub" data-testid="task-dialog">
+  <div class="modal-box dialog-box">
+    <h2 class="dialog-title" id="dialog-title" data-testid="dialog-title">Новая задача</h2>
+    <p class="dialog-sub" id="dialog-sub">Название обязательно, остальное можно заполнить позже.</p>
+
+    <form id="task-form" novalidate data-testid="task-form">
+      <div class="field">
+        <label class="field-label" for="task-title">Название</label>
+        <input id="task-title" name="title" class="input field-input" type="text"
+               placeholder="Например: сдать отчёт по практике" autocomplete="off"
+               aria-describedby="title-error" required data-testid="field-title">
+        <p class="field-error" id="title-error" role="alert" data-testid="title-error" hidden>Введите название задачи</p>
+      </div>
+
+      <div class="field">
+        <label class="field-label" for="task-desc">Описание</label>
+        <textarea id="task-desc" name="description" class="textarea field-textarea" rows="3"
+                  placeholder="Детали, ссылки, что именно сделать" data-testid="field-description"></textarea>
+      </div>
+
+      <div class="field">
+        <label class="field-label" for="task-due">Срок</label>
+        <input id="task-due" name="due" class="input field-input field-date" type="date" data-testid="field-due">
+      </div>
+
+      <div class="dialog-error" id="dialog-error" role="alert" data-testid="dialog-error" hidden>
+        <strong id="dialog-error-title">Не удалось сохранить задачу</strong>
+        <span id="dialog-error-text">Проверьте соединение и попробуйте ещё раз.</span>
+      </div>
+
+      <div class="modal-action dialog-actions">
+        <button class="btn btn-ghost" type="button" id="dialog-cancel" data-testid="dialog-cancel">Отмена</button>
+        <button class="btn btn-primary" type="submit" id="dialog-submit" data-testid="dialog-submit">Создать задачу</button>
+      </div>
+    </form>
+  </div>
+</dialog>
+
+<dialog id="confirm-dialog" class="modal" aria-labelledby="confirm-title" aria-describedby="confirm-text" data-testid="confirm-dialog">
+  <div class="modal-box dialog-box dialog-box--confirm">
+    <h2 class="dialog-title" id="confirm-title">Удалить задачу?</h2>
+    <p class="dialog-sub" id="confirm-text" data-testid="confirm-text">Задача исчезнет из списка. Это действие нельзя отменить.</p>
+    <div class="modal-action dialog-actions">
+      <button class="btn btn-ghost" type="button" id="confirm-cancel" data-testid="confirm-cancel">Отмена</button>
+      <button class="btn btn-error" type="button" id="confirm-delete" data-testid="confirm-delete">Удалить</button>
+    </div>
+  </div>
+</dialog>
+
+<script type="module" src="/js/app.js"></script>
+</body>
+</html>
