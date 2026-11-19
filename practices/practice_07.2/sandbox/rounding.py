@@ -1,6 +1,6 @@
 def round_to(value, digits=2):
     factor = 10 ** digits
-    return int(value * factor) / factor
+    return round(value * factor) / factor
 
 
 def total_with_vat(amount, rate=20):
