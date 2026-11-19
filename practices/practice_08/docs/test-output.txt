@@ -1,0 +1,74 @@
+
+> taskflow@1.0.0 test
+> node --test test/*.test.js && npm run test:client
+
+TaskFlow running on http://localhost:3456
+▶ API /api/tasks
+  ✔ POST /api/tasks creates task (59.631375ms)
+  ✔ POST /api/tasks rejects empty title (3.051542ms)
+  ✔ GET /api/tasks returns array (1.779ms)
+  ✔ GET /api/tasks/:id returns task (4.147292ms)
+  ✔ GET /api/tasks/:id returns 404 for missing (0.706542ms)
+  ✔ PUT /api/tasks/:id updates task (1.684667ms)
+  ✔ DELETE /api/tasks/:id removes task (1.876208ms)
+  ✔ GET /api/tasks?q=... searches (1.6595ms)
+  ✔ POST with due_date (0.708875ms)
+  ✔ PUT updates due_date (1.241958ms)
+✔ API /api/tasks (608.659625ms)
+▶ db
+  ✔ creates tasks table (0.298916ms)
+  ✔ add returns new task with id (0.10475ms)
+  ✔ all returns tasks (0.066875ms)
+  ✔ getById returns correct task (0.078083ms)
+  ✔ update modifies fields (0.50625ms)
+  ✔ remove deletes task (0.093166ms)
+  ✔ search finds by title (0.135875ms)
+  ✔ add supports due_date (0.077375ms)
+  ✔ add defaults due_date to null (0.065083ms)
+  ✔ update can set due_date (0.161625ms)
+  ✔ update can clear due_date (0.1695ms)
+✔ db (7.452834ms)
+[taskflow-check] npm test: PASS (21 passed, 0 failed)
+[taskflow-check] npm test: FAIL (exit 1, 1 failed)
+fail 1
+AssertionError: boom
+▶ taskflow-check plugin hook
+  ✔ runs npm test and appends the result after a source edit (2.605417ms)
+  ✔ surfaces a failure when the tests fail (0.28975ms)
+  ✔ ignores edits to non-source files (0.136916ms)
+  ✔ ignores non-editing tools (0.327375ms)
+✔ taskflow-check plugin hook (3.76275ms)
+ℹ tests 25
+ℹ suites 3
+ℹ pass 25
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 648.573834
+
+> taskflow@1.0.0 test:client
+> playwright test
+
+
+Running 17 tests using 1 worker
+
+  ✓   1 test/client/app.spec.js:16:3 › список задач › показывает карточки, счётчики и выполненные задачи (784ms)
+  ✓   2 test/client/app.spec.js:38:3 › список задач › показывает загрузку, пока сервер не ответил (2.3s)
+  ✓   3 test/client/app.spec.js:49:3 › список задач › показывает пустой список на пустой базе (870ms)
+  ✓   4 test/client/app.spec.js:58:3 › список задач › показывает ошибку загрузки и повторяет запрос по кнопке (672ms)
+  ✓   5 test/client/app.spec.js:74:3 › создание задачи › открывает диалог, создаёт задачу и показывает её первой (1.6s)
+  ✓   6 test/client/app.spec.js:105:3 › создание задачи › не отправляет форму с пустым названием и показывает ошибку поля (644ms)
+  ✓   7 test/client/app.spec.js:123:3 › создание задачи › двойной клик и повторный Enter не создают второй запрос (1.8s)
+  ✓   8 test/client/app.spec.js:148:3 › создание задачи › при ошибке сервера сохраняет введённые данные и даёт повторить (1.9s)
+  ✓   9 test/client/app.spec.js:172:3 › изменение и удаление › отмечает задачу выполненной и обновляет счётчики (1.7s)
+  ✓  10 test/client/app.spec.js:189:3 › изменение и удаление › подтверждает удаление и убирает карточку (2.0s)
+  ✓  11 test/client/app.spec.js:211:3 › изменение и удаление › сообщает, если задачу уже удалили на сервере (766ms)
+  ✓  12 test/client/app.spec.js:225:3 › поиск и фильтры › ищет по запросу и показывает пустой результат с отменой поиска (2.4s)
+  ✓  13 test/client/app.spec.js:244:3 › поиск и фильтры › переключает фильтры и объясняет пустую выборку (681ms)
+  ✓  14 test/client/app.spec.js:262:3 › клавиатура и фокус › диалог открывается с клавиатуры, закрывается по Esc и возвращает фокус (1.2s)
+  ✓  15 test/client/app.spec.js:278:3 › клавиатура и фокус › у кнопок виден фокус при навигации Tab (506ms)
+  ✓  16 test/client/app.spec.js:298:3 › узкий экран › карточки и диалог остаются читаемыми на 390px (481ms)
+  ✓  17 test/client/real-api.spec.js:13:3 › основной сценарий с настоящим API › создание, выполнение, сохранение после перезагрузки и удаление (2.5s)
+
+  17 passed (23.2s)

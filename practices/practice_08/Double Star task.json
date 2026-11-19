@@ -1,0 +1,712 @@
+{
+  "name": "Double Star task",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "github-bugfix",
+        "options": {}
+      },
+      "id": "bd77df3c-4b72-4b8d-9228-25762733fc7c",
+      "name": "Bug Report Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        112
+      ],
+      "webhookId": "b59ef81c-6fc4-4f7a-b6b1-9a4f3f724080"
+    },
+    {
+      "parameters": {
+        "jsCode": "const ALLOWED_PREFIX = 'practices/practice_07.2/sandbox/';\nconst out = [];\nfor (const item of $input.all()) {\n  const ev = item.json.body || item.json;\n  if (!ev.issue) continue;\n  const labels = (ev.issue.labels || []).map(function (l) { return typeof l === 'string' ? l : l.name; });\n  const isBug = labels.indexOf('bug') !== -1;\n  const relevant = (ev.action === 'labeled' && ev.label && ev.label.name === 'bug') ||\n                   (ev.action === 'opened' && isBug);\n  if (!relevant) continue;\n\n  const repo = ev.repository || {};\n  const full = repo.full_name || '';\n  const body = String(ev.issue.body || '');\n  const match = body.match(/([A-Za-z0-9_./-]+\\.py)/);\n  let filePath = match ? match[1] : '';\n  if (!filePath) filePath = ALLOWED_PREFIX + 'pricecalc.py';\n  if (filePath.indexOf(ALLOWED_PREFIX) !== 0) continue;\n\n  const number = ev.issue.number;\n  out.push({ json: {\n    owner: repo.owner ? repo.owner.login : '',\n    repo: repo.name || '',\n    number: number,\n    title: String(ev.issue.title || ''),\n    body: body,\n    filePath: filePath,\n    branch: 'ai-fix/issue-' + number,\n    issueUrl: ev.issue.html_url || '',\n  }});\n}\nreturn out;"
+      },
+      "id": "bbfe5723-aa24-4f51-8bce-6f0d3ed21b98",
+      "name": "Parse Bug Report",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        224,
+        112
+      ]
+    },
+    {
+      "parameters": {
+        "url": "={{ \"https://api.github.com/repos/\" + $json.owner + \"/\" + $json.repo + \"/contents/\" + $json.filePath + \"?ref=main\" }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "githubApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Accept",
+              "value": "application/vnd.github+json"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "5c78c711-0bd3-457c-a287-df168782a6c5",
+      "name": "Get Source File",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        448,
+        112
+      ],
+      "credentials": {
+        "githubApi": {
+          "id": "YcrkrWJhRuhrpJe1",
+          "name": "GitHub account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const ctx = $('Parse Bug Report').first().json;\nconst res = $input.first().json;\nconst code = Buffer.from(String(res.content || '').replace(/\\n/g, ''), 'base64').toString('utf8');\nconst prompt = [\n  'Ты старший разработчик. В репозитории есть баг-репорт и исходный файл с ошибкой.',\n  'Исправь ошибку минимальным изменением, не меняя публичный API и стиль файла.',\n  '',\n  '=== БАГ-РЕПОРТ ===',\n  ctx.title,\n  '',\n  ctx.body,\n  '',\n  '=== ФАЙЛ ' + ctx.filePath + ' ===',\n  code,\n  '',\n  'Верни ТОЛЬКО полный исправленный код файла: без пояснений, без markdown-обёртки и без троеточий.',\n  'Код должен быть синтаксически корректным Python.',\n].join(String.fromCharCode(10));\nreturn [{ json: {\n  owner: ctx.owner,\n  repo: ctx.repo,\n  number: ctx.number,\n  title: ctx.title,\n  filePath: ctx.filePath,\n  branch: ctx.branch,\n  issueUrl: ctx.issueUrl,\n  sha: res.sha,\n  original: code,\n  prompt: prompt,\n}}];"
+      },
+      "id": "846a3d15-a49a-41de-b43a-a95a3eaa59e0",
+      "name": "Decode File + Build Prompt",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        672,
+        112
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.prompt }}",
+        "batching": {}
+      },
+      "id": "be99d948-e2d2-4761-b3b4-87856758d9cf",
+      "name": "Generate Fix (AI)",
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        896,
+        112
+      ]
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "deepseek/deepseek-v4.1-flash-1017",
+          "cachedResultName": "deepseek/deepseek-v4.1-flash-1017"
+        },
+        "responsesApiEnabled": false,
+        "options": {}
+      },
+      "id": "9a5a6897-dfc8-4a8f-83d9-82bb8d22c30c",
+      "name": "DeepSeek Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        1824,
+        384
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "t7wQLdv3xwzSq5yp",
+          "name": "VseLLM OpenAI"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const ctx = $('Decode File + Build Prompt').first().json;\nlet text = String($input.first().json.text || '').trim();\nconst fence = String.fromCharCode(96, 96, 96);\nif (text.indexOf(fence) === 0) {\n  text = text.split(fence).join('').replace(/^python/i, '').trim();\n}\nif (!text) {\n  return [];\n}\nconst changed = text !== ctx.original.trim();\nreturn [{ json: {\n  owner: ctx.owner,\n  repo: ctx.repo,\n  number: ctx.number,\n  title: ctx.title,\n  filePath: ctx.filePath,\n  branch: ctx.branch,\n  issueUrl: ctx.issueUrl,\n  sha: ctx.sha,\n  fixed: text,\n  contentBase64: Buffer.from(text, 'utf8').toString('base64'),\n  changed: changed,\n  message: 'fix: ' + ctx.title + ' (closes #' + ctx.number + ')',\n}}];"
+      },
+      "id": "fe5a4531-2492-48c2-86b9-d64a578141ad",
+      "name": "Prepare Commit",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1248,
+        112
+      ]
+    },
+    {
+      "parameters": {
+        "url": "={{ \"https://api.github.com/repos/\" + $(\"Prepare Commit\").first().json.owner + \"/\" + $(\"Prepare Commit\").first().json.repo + \"/git/ref/heads/main\" }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "githubApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Accept",
+              "value": "application/vnd.github+json"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        }
+      },
+      "id": "8d9ba940-ebd4-4aad-8a29-03a2b2381308",
+      "name": "Get main SHA",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        1472,
+        112
+      ],
+      "credentials": {
+        "githubApi": {
+          "id": "YcrkrWJhRuhrpJe1",
+          "name": "GitHub account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ \"https://api.github.com/repos/\" + $(\"Prepare Commit\").first().json.owner + \"/\" + $(\"Prepare Commit\").first().json.repo + \"/git/refs\" }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "githubApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Accept",
+              "value": "application/vnd.github+json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ ref: \"refs/heads/\" + $(\"Prepare Commit\").first().json.branch, sha: $json.object.sha }) }}",
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        }
+      },
+      "id": "e9df1c19-6aca-481e-ae37-96b5d88f27e8",
+      "name": "Create Branch",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        1696,
+        112
+      ],
+      "credentials": {
+        "githubApi": {
+          "id": "YcrkrWJhRuhrpJe1",
+          "name": "GitHub account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "PUT",
+        "url": "={{ \"https://api.github.com/repos/\" + $(\"Prepare Commit\").first().json.owner + \"/\" + $(\"Prepare Commit\").first().json.repo + \"/contents/\" + $(\"Prepare Commit\").first().json.filePath }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "githubApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Accept",
+              "value": "application/vnd.github+json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ message: $(\"Prepare Commit\").first().json.message, content: $(\"Prepare Commit\").first().json.contentBase64, sha: $(\"Prepare Commit\").first().json.sha, branch: $(\"Prepare Commit\").first().json.branch }) }}",
+        "options": {}
+      },
+      "id": "6bef0711-b6a0-420d-9080-0062bd061db2",
+      "name": "Commit Fixed File",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        1920,
+        112
+      ],
+      "credentials": {
+        "githubApi": {
+          "id": "YcrkrWJhRuhrpJe1",
+          "name": "GitHub account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ \"https://api.github.com/repos/\" + $(\"Prepare Commit\").first().json.owner + \"/\" + $(\"Prepare Commit\").first().json.repo + \"/pulls\" }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "githubApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Accept",
+              "value": "application/vnd.github+json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ title: \"AI fix: \" + $(\"Prepare Commit\").first().json.title, head: $(\"Prepare Commit\").first().json.branch, base: \"main\", body: \"Автоматический фикс по Issue \" + $(\"Prepare Commit\").first().json.issueUrl + \"\\n\\nCloses #\" + $(\"Prepare Commit\").first().json.number + \"\\n\\nСгенерировано и проверено AI-агентом в n8n.\" }) }}",
+        "options": {}
+      },
+      "id": "172600ce-dded-4192-a195-7e4227794f3b",
+      "name": "Open Pull Request",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        2144,
+        112
+      ],
+      "credentials": {
+        "githubApi": {
+          "id": "YcrkrWJhRuhrpJe1",
+          "name": "GitHub account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "={{ \"https://api.github.com/repos/\" + $(\"Prepare Commit\").first().json.owner + \"/\" + $(\"Prepare Commit\").first().json.repo + \"/pulls/\" + $json.number }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "githubApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Accept",
+              "value": "application/vnd.github.v3.diff"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "text"
+            }
+          }
+        }
+      },
+      "id": "877339de-e987-4dea-95b0-c04963c2553b",
+      "name": "Get PR Diff",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        2368,
+        112
+      ],
+      "credentials": {
+        "githubApi": {
+          "id": "YcrkrWJhRuhrpJe1",
+          "name": "GitHub account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const ctx = $('Prepare Commit').first().json;\nconst pr = $('Open Pull Request').first().json;\nconst diff = String($input.first().json.data || '');\nconst prompt = [\n  'Ты ревьюер кода. Ниже diff автоматического исправления бага.',\n  'Оцени, можно ли это мержить в main без доработки.',\n  '',\n  'Блокирующими считаются: неверная логика, потерянная функциональность, синтаксические ошибки,',\n  'сломанные импорты, необработанные исключения в основном сценарии, отладочные print.',\n  'Косметика (стиль, форматирование) — НЕ блокирует.',\n  '',\n  '=== ISSUE ===',\n  ctx.title,\n  '',\n  '=== DIFF ===',\n  diff,\n  '',\n  'Ответ в формате:',\n  'первая строка — ВЕРДИКТ: OK или ВЕРДИКТ: BLOCK',\n  'дальше — 1-3 строки пояснения по-русски.',\n].join(String.fromCharCode(10));\nreturn [{ json: {\n  owner: ctx.owner,\n  repo: ctx.repo,\n  number: ctx.number,\n  title: ctx.title,\n  branch: ctx.branch,\n  prNumber: pr.number,\n  prUrl: pr.html_url || '',\n  prompt: prompt,\n}}];"
+      },
+      "id": "65ddb8c1-9e4f-4e2f-bd02-8922baadc6b1",
+      "name": "Build Review Prompt",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2592,
+        112
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.prompt }}",
+        "batching": {}
+      },
+      "id": "7016bd0f-d02e-45f0-a6cf-c011af41f560",
+      "name": "Review Fix (AI)",
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        2816,
+        112
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const ctx = $('Build Review Prompt').first().json;\nconst text = String($input.first().json.text || '');\nconst block = /ВЕРДИКТ:\\s*BLOCK/i.test(text);\nconst ok = /ВЕРДИКТ:\\s*OK/i.test(text);\nlet blocking = true;\nif (ok && !block) blocking = false;\nif (!ok && !block) blocking = true;\nreturn [{ json: {\n  owner: ctx.owner,\n  repo: ctx.repo,\n  number: ctx.number,\n  prNumber: ctx.prNumber,\n  prUrl: ctx.prUrl,\n  title: ctx.title,\n  blocking: blocking,\n  verdict: text.trim(),\n}}];"
+      },
+      "id": "095b3131-ca1d-4664-8b7f-7ba2c29f0a9d",
+      "name": "Parse Verdict",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3168,
+        112
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.blocking }}",
+              "operator": {
+                "type": "boolean",
+                "operation": "false"
+              },
+              "rightValue": ""
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "019c75a0-5a49-4db5-b5f9-6c5ffe0cd1f4",
+      "name": "No Blocking Issues?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        3392,
+        112
+      ]
+    },
+    {
+      "parameters": {
+        "method": "PUT",
+        "url": "={{ \"https://api.github.com/repos/\" + $(\"Parse Verdict\").first().json.owner + \"/\" + $(\"Parse Verdict\").first().json.repo + \"/pulls/\" + $(\"Parse Verdict\").first().json.prNumber + \"/merge\" }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "githubApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Accept",
+              "value": "application/vnd.github+json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ commit_title: \"AI fix: \" + $(\"Parse Verdict\").first().json.title + \" (#\" + $(\"Parse Verdict\").first().json.prNumber + \")\", merge_method: \"squash\" }) }}",
+        "options": {}
+      },
+      "id": "d4b630ae-ace3-45ea-8f8a-6c275460f5e7",
+      "name": "Merge PR",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        3616,
+        16
+      ],
+      "credentials": {
+        "githubApi": {
+          "id": "YcrkrWJhRuhrpJe1",
+          "name": "GitHub account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ \"https://api.github.com/repos/\" + $(\"Parse Verdict\").first().json.owner + \"/\" + $(\"Parse Verdict\").first().json.repo + \"/issues/\" + $(\"Parse Verdict\").first().json.number + \"/comments\" }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "githubApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Accept",
+              "value": "application/vnd.github+json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ body: \"Исправление отправлено в main автоматически.\\n\\nPR: \" + $(\"Parse Verdict\").first().json.prUrl + \"\\n\\nВердикт ревьюера: \" + $(\"Parse Verdict\").first().json.verdict }) }}",
+        "options": {}
+      },
+      "id": "316eae84-a9bc-44e9-9b1c-4f9fe1438601",
+      "name": "Comment: Merged",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        3840,
+        16
+      ],
+      "credentials": {
+        "githubApi": {
+          "id": "YcrkrWJhRuhrpJe1",
+          "name": "GitHub account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ \"https://api.github.com/repos/\" + $(\"Parse Verdict\").first().json.owner + \"/\" + $(\"Parse Verdict\").first().json.repo + \"/issues/\" + $(\"Parse Verdict\").first().json.number + \"/comments\" }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "githubApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Accept",
+              "value": "application/vnd.github+json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ body: \"Автоматический фикс готов, но ревьюер нашёл блокирующие замечания — мерж не выполнен.\\n\\nPR: \" + $(\"Parse Verdict\").first().json.prUrl + \"\\n\\n\" + $(\"Parse Verdict\").first().json.verdict }) }}",
+        "options": {}
+      },
+      "id": "bfa0831b-1ddc-4f09-8471-ebf674d62770",
+      "name": "Comment: Needs Work",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        3616,
+        208
+      ],
+      "credentials": {
+        "githubApi": {
+          "id": "YcrkrWJhRuhrpJe1",
+          "name": "GitHub account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Bug Report Webhook": {
+      "main": [
+        [
+          {
+            "node": "Parse Bug Report",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Bug Report": {
+      "main": [
+        [
+          {
+            "node": "Get Source File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Source File": {
+      "main": [
+        [
+          {
+            "node": "Decode File + Build Prompt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Decode File + Build Prompt": {
+      "main": [
+        [
+          {
+            "node": "Generate Fix (AI)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Fix (AI)": {
+      "main": [
+        [
+          {
+            "node": "Prepare Commit",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "DeepSeek Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Generate Fix (AI)",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "Review Fix (AI)",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Commit": {
+      "main": [
+        [
+          {
+            "node": "Get main SHA",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get main SHA": {
+      "main": [
+        [
+          {
+            "node": "Create Branch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Branch": {
+      "main": [
+        [
+          {
+            "node": "Commit Fixed File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Commit Fixed File": {
+      "main": [
+        [
+          {
+            "node": "Open Pull Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Open Pull Request": {
+      "main": [
+        [
+          {
+            "node": "Get PR Diff",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get PR Diff": {
+      "main": [
+        [
+          {
+            "node": "Build Review Prompt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Review Prompt": {
+      "main": [
+        [
+          {
+            "node": "Review Fix (AI)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Review Fix (AI)": {
+      "main": [
+        [
+          {
+            "node": "Parse Verdict",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Verdict": {
+      "main": [
+        [
+          {
+            "node": "No Blocking Issues?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "No Blocking Issues?": {
+      "main": [
+        [
+          {
+            "node": "Merge PR",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Comment: Needs Work",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge PR": {
+      "main": [
+        [
+          {
+            "node": "Comment: Merged",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": true
+  },
+  "versionId": "c5581eb6-008a-45a4-9893-10411fdbf60d",
+  "meta": {
+    "aiBuilderAssisted": true,
+    "builderVariant": "mcp",
+    "instanceId": "0cd8a174f462363e2854d003e0a806e78974acf8794d42e74f686084b36f2ff4"
+  },
+  "nodeGroups": [],
+  "id": "jDWnFJDD0cquTzwO",
+  "tags": []
+}

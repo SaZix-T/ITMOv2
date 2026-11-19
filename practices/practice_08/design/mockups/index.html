@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>TaskFlow — варианты макета</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #0b0d12;
+      --panel: #12161f;
+      --border: #232a38;
+      --text: #e6ebf3;
+      --muted: #94a1b5;
+      --accent: #7dd3fc;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      padding: 32px 24px 64px;
+      background: var(--bg);
+      color: var(--text);
+      font: 15px/1.55 "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    header { max-width: 1180px; margin: 0 auto 28px; }
+    h1 { margin: 0 0 6px; font-size: 26px; letter-spacing: -0.02em; }
+    header p { margin: 0; color: var(--muted); max-width: 760px; }
+    .grid {
+      max-width: 1180px;
+      margin: 0 auto;
+      display: grid;
+      gap: 24px;
+      grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+    }
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+    .card-head { padding: 16px 18px 12px; border-bottom: 1px solid var(--border); }
+    .card-head h2 { margin: 0 0 4px; font-size: 17px; }
+    .card-head .meta { color: var(--muted); font-size: 13px; }
+    .card-head .desc { margin-top: 8px; font-size: 13.5px; color: #c3ccda; }
+    iframe {
+      width: 100%;
+      height: 620px;
+      border: 0;
+      background: #000;
+      display: block;
+    }
+    .card-foot {
+      padding: 10px 18px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      gap: 14px;
+      align-items: center;
+      font-size: 13px;
+    }
+    .card-foot a { color: var(--accent); }
+    .hint {
+      max-width: 1180px;
+      margin: 0 auto 24px;
+      padding: 12px 16px;
+      border: 1px dashed var(--border);
+      border-radius: 10px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+    code { font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 12.5px; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>TaskFlow — пять вариантов макета</h1>
+    <p>Один и тот же экран и одинаковый набор состояний, разные библиотеки компонентов и характер.
+      Внизу слева у каждого макета — панель «МАКЕТ»: она переключает список, загрузку, пустое
+      состояние, ошибку и диалог.</p>
+  </header>
+
+  <p class="hint">Если панель не видна, прокрути страницу внутри рамки вниз или открой макет
+    отдельно по ссылке под ним. Все макеты статические: данные и ответы сервера не запрашиваются.</p>
+
+  <div class="grid">
+    <article class="card">
+      <div class="card-head">
+        <h2>1. Орбита</h2>
+        <div class="meta">Shoelace 2.15 · Space Grotesk + Inter</div>
+        <p class="desc">Тёмный космос с тонкими орбитами и холодным циановым светом. Стеклянные карточки,
+          веб-компоненты библиотеки.</p>
+      </div>
+      <iframe src="variant-1-orbita.html" title="Макет «Орбита»" loading="lazy"></iframe>
+      <div class="card-foot"><a href="variant-1-orbita.html" target="_blank" rel="noopener">Открыть отдельно</a></div>
+    </article>
+
+    <article class="card">
+      <div class="card-head">
+        <h2>2. Туманность</h2>
+        <div class="meta">DaisyUI 5 · Manrope</div>
+        <p class="desc">Фиолетово-розовая туманность, мягкое свечение, крупные скругления. Самый «неоновый»
+          из вариантов.</p>
+      </div>
+      <iframe src="variant-2-tumannost.html" title="Макет «Туманность»" loading="lazy"></iframe>
+      <div class="card-foot"><a href="variant-2-tumannost.html" target="_blank" rel="noopener">Открыть отдельно</a></div>
+    </article>
+
+    <article class="card">
+      <div class="card-head">
+        <h2>3. Пульт</h2>
+        <div class="meta">Bootstrap 5.3 · IBM Plex Sans + Mono</div>
+        <p class="desc">Пульт управления: телеметрия слева, плотные строки задач, янтарный акцент.
+          Строгий инженерный вид.</p>
+      </div>
+      <iframe src="variant-3-pult.html" title="Макет «Пульт»" loading="lazy"></iframe>
+      <div class="card-foot"><a href="variant-3-pult.html" target="_blank" rel="noopener">Открыть отдельно</a></div>
+    </article>
+
+    <article class="card">
+      <div class="card-head">
+        <h2>4. Луна</h2>
+        <div class="meta">Pico CSS 2 · Unbounded + Inter</div>
+        <p class="desc">Тихий минимализм лунной базы: ледяной акцент, много воздуха, крупная типографика,
+          почти без декора.</p>
+      </div>
+      <iframe src="variant-4-luna.html" title="Макет «Луна»" loading="lazy"></iframe>
+      <div class="card-foot"><a href="variant-4-luna.html" target="_blank" rel="noopener">Открыть отдельно</a></div>
+    </article>
+
+    <article class="card">
+      <div class="card-head">
+        <h2>5. Станция</h2>
+        <div class="meta">Beer CSS 3.12 (Material 3) · Rubik</div>
+        <p class="desc">Бортовая система: боковая навигация по «секторам», мятный акцент, тональные
+          поверхности Material 3.</p>
+      </div>
+      <iframe src="variant-5-stanciya.html" title="Макет «Станция»" loading="lazy"></iframe>
+      <div class="card-foot"><a href="variant-5-stanciya.html" target="_blank" rel="noopener">Открыть отдельно</a></div>
+    </article>
+  </div>
+
+  <p class="hint" style="margin-top:28px">Спецификация, по которой сделаны все пять макетов:
+    <code>design/mockups/SPEC.md</code>.</p>
+</body>
+</html>

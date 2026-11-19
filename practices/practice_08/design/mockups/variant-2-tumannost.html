@@ -1,0 +1,1380 @@
+<!DOCTYPE html>
+<html lang="ru" data-theme="synthwave">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TaskFlow — макет «Туманность»</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/daisyui@5/daisyui.css" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/daisyui@5/themes.css" rel="stylesheet">
+<style>
+  /* ---------- Палитра: переопределение переменных DaisyUI ---------- */
+  :root {
+    --bg: #0a0616;
+    --surface: #150c2b;
+    --line: #3b2a63;
+    --text: #f2e9ff;
+    --muted: #b6a4d6;
+    --primary: #c084fc;
+    --secondary: #f472b6;
+    --accent: #d8b4fe;
+    --success: #34d399;
+    --danger: #fb7185;
+    --warn: #fbbf24;
+    --font-sans: "Manrope", system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+    --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  }
+
+  html[data-theme="synthwave"] {
+    --color-base-100: #0a0616;
+    --color-base-200: #150c2b;
+    --color-base-300: #241645;
+    --color-base-content: #f2e9ff;
+    --color-primary: #c084fc;
+    --color-primary-content: #170a26;
+    --color-secondary: #f472b6;
+    --color-secondary-content: #22040f;
+    --color-accent: #d8b4fe;
+    --color-accent-content: #04191d;
+    --color-neutral: #150c2b;
+    --color-neutral-content: #f2e9ff;
+    --color-info: #22d3ee;
+    --color-success: #34d399;
+    --color-success-content: #04140f;
+    --color-warning: #fbbf24;
+    --color-warning-content: #1c1403;
+    --color-error: #fb7185;
+    --color-error-content: #240509;
+    --radius-box: 20px;
+    --radius-field: 12px;
+    --radius-selector: 10px;
+    --border: 1px;
+    --depth: 0;
+    --noise: 0;
+  }
+
+  /* ---------- База ---------- */
+  html {
+    color-scheme: dark;
+    scrollbar-color: #4a3578 #0a0616;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    min-height: 100dvh;
+    padding-bottom: 112px;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-sans);
+    font-size: 15px;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
+  h1, h2, h3, p { margin: 0; }
+  [hidden] { display: none !important; }
+
+  /* ---------- Туманность: фон ---------- */
+  .nebula {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    overflow: hidden;
+    pointer-events: none;
+    background:
+      radial-gradient(90% 60% at 50% -10%, #180d33 0%, transparent 70%),
+      linear-gradient(180deg, #0b0618 0%, #08040f 100%);
+  }
+  .blob {
+    position: absolute;
+    display: block;
+    border-radius: 50%;
+    filter: blur(90px);
+    will-change: transform;
+  }
+  .blob-violet {
+    width: 620px; height: 620px;
+    top: -230px; left: -170px;
+    background: radial-gradient(circle, rgba(124,58,237,.85) 0%, rgba(124,58,237,0) 68%);
+    opacity: .55;
+    animation: drift-a 26s ease-in-out infinite alternate;
+  }
+  .blob-rose {
+    width: 560px; height: 560px;
+    top: 90px; right: -190px;
+    background: radial-gradient(circle, rgba(244,114,182,.8) 0%, rgba(244,114,182,0) 68%);
+    opacity: .38;
+    animation: drift-b 32s ease-in-out infinite alternate;
+  }
+  .blob-cyan {
+    width: 720px; height: 720px;
+    bottom: -420px; left: 22%;
+    background: radial-gradient(circle, rgba(34,211,238,.75) 0%, rgba(34,211,238,0) 70%);
+    opacity: .22;
+    animation: drift-c 38s ease-in-out infinite alternate;
+  }
+  .stars {
+    position: absolute;
+    inset: -12%;
+    display: block;
+    background-repeat: repeat;
+  }
+  .stars-a {
+    opacity: .7;
+    background-image:
+      radial-gradient(1.3px 1.3px at 26px 40px, rgba(255,255,255,.9) 50%, transparent 51%),
+      radial-gradient(1px 1px at 148px 96px, rgba(214,190,255,.8) 50%, transparent 51%),
+      radial-gradient(1.6px 1.6px at 212px 168px, rgba(255,255,255,.7) 50%, transparent 51%),
+      radial-gradient(1px 1px at 92px 198px, rgba(255,255,255,.6) 50%, transparent 51%),
+      radial-gradient(1.2px 1.2px at 250px 24px, rgba(34,211,238,.65) 50%, transparent 51%);
+    background-size: 280px 280px;
+    animation: twinkle 9s ease-in-out infinite alternate;
+  }
+  .stars-b {
+    opacity: .35;
+    background-image:
+      radial-gradient(1.6px 1.6px at 60px 80px, rgba(255,255,255,.85) 50%, transparent 51%),
+      radial-gradient(1px 1px at 260px 210px, rgba(244,114,182,.7) 50%, transparent 51%),
+      radial-gradient(1.2px 1.2px at 340px 130px, rgba(255,255,255,.6) 50%, transparent 51%);
+    background-size: 430px 430px;
+    animation: twinkle 14s ease-in-out infinite alternate-reverse;
+  }
+  .vignette {
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(125% 95% at 50% 0%, transparent 32%, rgba(5,2,12,.6) 100%);
+  }
+  @keyframes drift-a { to { transform: translate3d(56px, 44px, 0) scale(1.1); } }
+  @keyframes drift-b { to { transform: translate3d(-48px, 36px, 0) scale(1.06); } }
+  @keyframes drift-c { to { transform: translate3d(30px, -40px, 0) scale(1.08); } }
+  @keyframes twinkle { from { opacity: .28; } to { opacity: .72; } }
+
+  /* ---------- Каркас ---------- */
+  .shell {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    max-width: 1040px;
+    margin: 0 auto;
+    padding: 28px 24px 40px;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+  }
+
+  /* ---------- Шапка ---------- */
+  .app-header {
+    display: grid;
+    grid-template-areas: "brand search action";
+    grid-template-columns: minmax(0, 1fr) minmax(200px, 330px) auto;
+    align-items: end;
+    gap: 18px;
+    padding: 18px 20px;
+    border: 1px solid var(--line);
+    border-radius: 24px;
+    background-color: rgba(255,255,255,.04);
+    background-image: radial-gradient(130% 90% at 88% -20%, rgba(192,132,252,.16), transparent 60%);
+    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(12px);
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,.06),
+      0 24px 60px -46px rgba(192,132,252,.9);
+  }
+  .brand {
+    grid-area: brand;
+    display: flex;
+    align-items: center;
+    gap: 13px;
+    min-width: 0;
+  }
+  .mark {
+    position: relative;
+    width: 44px;
+    height: 44px;
+    flex: 0 0 44px;
+    display: grid;
+    place-items: center;
+  }
+  .mark-core {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 34% 30%, #ffffff 0%, #e9d5ff 30%, var(--primary) 62%, #8b5cf6 100%);
+    box-shadow: 0 0 18px rgba(192,132,252,.9), 0 0 42px rgba(192,132,252,.45);
+  }
+  .mark-ring {
+    position: absolute;
+    inset: 2px;
+    border-radius: 50%;
+    border: 1px solid rgba(192,132,252,.55);
+    transform: rotate(-26deg) scaleY(.48);
+    box-shadow: 0 0 12px rgba(192,132,252,.3);
+  }
+  .mark-dot {
+    position: absolute;
+    top: 12px;
+    right: 1px;
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: var(--accent);
+    box-shadow: 0 0 9px var(--accent);
+  }
+  .brand-text { display: flex; flex-direction: column; min-width: 0; }
+  .brand-name {
+    font-size: 22px;
+    font-weight: 800;
+    letter-spacing: -.025em;
+    line-height: 1.15;
+    color: #fbf5ff;
+  }
+  .brand-sub {
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .search-group {
+    grid-area: search;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    min-width: 0;
+  }
+  .field-label {
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    font-weight: 500;
+    letter-spacing: .13em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .search-input {
+    width: 100%;
+    height: 42px;
+    padding: 0 14px;
+    font-family: var(--font-sans);
+    font-size: 14px;
+    color: var(--text);
+    background: rgba(10,6,22,.62);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+  }
+  .search-input::placeholder { color: #8f7cb5; }
+  .search-input:focus {
+    border-color: rgba(34,211,238,.7);
+    box-shadow: 0 0 0 3px rgba(34,211,238,.14);
+    outline: none;
+  }
+  .search-input::-webkit-search-decoration,
+  .search-input::-webkit-search-cancel-button { -webkit-appearance: none; }
+
+  .new-task {
+    grid-area: action;
+    height: 42px;
+    min-height: 42px;
+    padding: 0 18px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-family: var(--font-sans);
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: -.005em;
+    color: #190b28;
+    background: linear-gradient(135deg, #d8b4fe 0%, #c084fc 45%, #a855f7 100%);
+    border: 1px solid rgba(255,255,255,.28);
+    border-radius: 12px;
+    box-shadow: 0 12px 30px -14px rgba(192,132,252,.95);
+    white-space: nowrap;
+  }
+  .new-task:hover {
+    background: linear-gradient(135deg, #e6ccff 0%, #cf9bff 45%, #b26bff 100%);
+    box-shadow: 0 14px 34px -12px rgba(192,132,252,1);
+  }
+  .new-task:active { transform: translateY(1px); }
+  .new-task svg { flex: 0 0 auto; }
+
+  /* ---------- Сводка ---------- */
+  .summary {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    border: 1px solid var(--line);
+    border-radius: 20px;
+    background-color: rgba(255,255,255,.04);
+    background-image: radial-gradient(120% 140% at 0% 0%, rgba(34,211,238,.07), transparent 55%);
+    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(12px);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.05);
+    overflow: hidden;
+  }
+  .stat {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    padding: 14px 20px 16px;
+  }
+  .stat + .stat::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 20%;
+    bottom: 20%;
+    width: 1px;
+    background: linear-gradient(180deg, transparent, rgba(122,95,180,.6), transparent);
+  }
+  .stat-label {
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    letter-spacing: .13em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .stat-value {
+    font-size: 30px;
+    font-weight: 800;
+    line-height: 1.05;
+    letter-spacing: -.035em;
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  .stat:nth-child(1) .stat-value { background-image: linear-gradient(180deg, #ffffff 0%, #d8b4fe 100%); }
+  .stat:nth-child(2) .stat-value { background-image: linear-gradient(180deg, #ffffff 0%, #7ee7f7 100%); }
+  .stat:nth-child(3) .stat-value { background-image: linear-gradient(180deg, #ffffff 0%, #6ee7b7 100%); }
+
+  /* ---------- Фильтры ---------- */
+  .filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .filter {
+    height: 34px;
+    min-height: 34px;
+    padding: 0 15px;
+    font-family: var(--font-sans);
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--muted);
+    background: rgba(255,255,255,.03);
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    transition: color .18s ease, background .18s ease, border-color .18s ease, box-shadow .18s ease;
+  }
+  .filter:hover {
+    color: var(--text);
+    background: rgba(255,255,255,.07);
+    border-color: rgba(192,132,252,.55);
+  }
+  .filter[aria-pressed="true"] {
+    color: #190b28;
+    background: linear-gradient(135deg, #d8b4fe, #c084fc 55%, #a855f7);
+    border-color: rgba(255,255,255,.3);
+    box-shadow: 0 10px 26px -14px rgba(192,132,252,.95);
+  }
+
+  /* ---------- Основная область ---------- */
+  #main { display: block; }
+  .state { display: block; }
+
+  /* ---------- Уведомление ---------- */
+  .toast-note {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 14px;
+    padding: 9px 10px 9px 12px;
+    border: 1px solid rgba(52,211,153,.36);
+    border-radius: 14px;
+    background-color: rgba(52,211,153,.08);
+    background-image: linear-gradient(90deg, rgba(52,211,153,.16), rgba(52,211,153,.03));
+    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(12px);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.06), 0 14px 34px -26px rgba(52,211,153,.9);
+    text-align: left;
+  }
+  .toast-icon {
+    display: grid;
+    place-items: center;
+    width: 24px;
+    height: 24px;
+    flex: 0 0 24px;
+    border-radius: 50%;
+    color: #04241a;
+    background: var(--success);
+    box-shadow: 0 0 14px rgba(52,211,153,.5);
+  }
+  .toast-text {
+    font-size: 13.5px;
+    font-weight: 600;
+    color: #d3fbea;
+  }
+  .toast-close {
+    margin-left: auto;
+    width: 26px;
+    height: 26px;
+    min-height: 26px;
+    padding: 0;
+    display: grid;
+    place-items: center;
+    color: #9fe8cd;
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 8px;
+  }
+  .toast-close:hover { color: #ffffff; background: rgba(255,255,255,.1); }
+
+  /* ---------- Карточки задач ---------- */
+  .task-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  .task-card {
+    position: relative;
+    border: 1px solid rgba(59,42,99,.95);
+    border-radius: 20px;
+    background-color: rgba(255,255,255,.04);
+    background-image: radial-gradient(120% 110% at 92% -30%, rgba(192,132,252,.1), transparent 58%);
+    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(12px);
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,.05),
+      0 20px 46px -40px rgba(192,132,252,.95);
+    transition: border-color .2s ease, background-color .2s ease, box-shadow .2s ease;
+  }
+  .task-card:hover {
+    border-color: rgba(192,132,252,.5);
+    background-color: rgba(255,255,255,.055);
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,.08),
+      0 22px 52px -34px rgba(192,132,252,.8);
+  }
+  .task-card .card-body {
+    display: block;
+    padding: 16px 18px;
+  }
+  .task-row {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    grid-template-areas: "check text actions";
+    gap: 14px;
+    align-items: start;
+  }
+  .check-wrap {
+    grid-area: check;
+    display: inline-flex;
+    padding-top: 2px;
+    cursor: pointer;
+  }
+  .task-card .checkbox {
+    width: 20px;
+    height: 20px;
+    margin: 0;
+    border: 1px solid rgba(192,132,252,.55);
+    border-radius: 6px;
+    background-color: rgba(10,6,22,.7);
+    transition: background .18s ease, border-color .18s ease, box-shadow .18s ease;
+  }
+  .task-card .checkbox:hover { border-color: var(--accent); }
+  .task-card .checkbox:checked {
+    background-color: #c084fc;
+    background-image: linear-gradient(135deg, #d8b4fe, #a855f7);
+    border-color: rgba(255,255,255,.35);
+    color: #150a22;
+    box-shadow: 0 0 14px rgba(192,132,252,.55);
+  }
+  .task-text { grid-area: text; min-width: 0; }
+  .task-title {
+    font-size: 16px;
+    font-weight: 700;
+    line-height: 1.35;
+    letter-spacing: -.012em;
+    color: #fbf5ff;
+    overflow-wrap: anywhere;
+  }
+  .task-desc {
+    margin-top: 3px;
+    font-size: 13.5px;
+    line-height: 1.5;
+    color: var(--muted);
+    overflow-wrap: anywhere;
+  }
+  .task-meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 7px;
+    margin-top: 11px;
+  }
+  .meta-badge {
+    height: auto;
+    padding: 3px 9px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 400;
+    letter-spacing: .01em;
+    color: #cbb9e8;
+    background: rgba(255,255,255,.05);
+    border: 1px solid rgba(255,255,255,.1);
+    border-radius: 8px;
+    white-space: nowrap;
+  }
+  .meta-badge b { font-weight: 500; color: #eadcff; }
+  .meta-badge.is-due {
+    color: #e6d3ff;
+    background: rgba(192,132,252,.12);
+    border-color: rgba(192,132,252,.32);
+  }
+  .meta-badge.is-due b { color: #f0e2ff; }
+  .meta-badge.is-today {
+    color: #ffe3a3;
+    background: rgba(251,191,36,.13);
+    border-color: rgba(251,191,36,.45);
+    box-shadow: 0 0 18px -8px rgba(251,191,36,.7);
+  }
+  .meta-badge.is-today b { color: #ffdf91; }
+  .meta-badge.is-today::before {
+    content: "";
+    display: inline-block;
+    width: 5px;
+    height: 5px;
+    margin-right: 6px;
+    vertical-align: 1px;
+    border-radius: 50%;
+    background: var(--warn);
+    box-shadow: 0 0 7px var(--warn);
+  }
+  .task-actions {
+    grid-area: actions;
+    display: flex;
+    gap: 6px;
+    align-items: center;
+  }
+  .task-actions .btn {
+    height: 32px;
+    min-height: 32px;
+    padding: 0 12px;
+    font-family: var(--font-sans);
+    font-size: 12.5px;
+    font-weight: 600;
+    border-radius: 10px;
+    white-space: nowrap;
+  }
+  .btn-edit {
+    color: #dccaf8;
+    background: rgba(255,255,255,.05);
+    border: 1px solid rgba(255,255,255,.11);
+  }
+  .btn-edit:hover {
+    color: #ffffff;
+    background: rgba(192,132,252,.2);
+    border-color: rgba(192,132,252,.55);
+  }
+  .btn-del {
+    color: #ffb7c3;
+    background: rgba(251,113,133,.09);
+    border: 1px solid rgba(251,113,133,.3);
+  }
+  .btn-del:hover {
+    color: #ffffff;
+    background: rgba(251,113,133,.24);
+    border-color: rgba(251,113,133,.65);
+  }
+
+  .task-card.is-done {
+    background-color: rgba(255,255,255,.028);
+    border-color: rgba(59,42,99,.75);
+  }
+  .task-card.is-done .task-title {
+    color: #a794c9;
+    text-decoration: line-through;
+    text-decoration-thickness: 1.5px;
+    text-decoration-color: rgba(167,148,201,.75);
+  }
+  .task-card.is-done .task-desc { color: #9c8abc; }
+  .task-card.is-done .meta-badge { opacity: .85; }
+
+  /* ---------- Загрузка ---------- */
+  .loading-line {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    margin-bottom: 12px;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    letter-spacing: .02em;
+    color: var(--muted);
+  }
+  .loading-line .loading { color: var(--accent); }
+  .skeleton-list { display: flex; flex-direction: column; gap: 12px; }
+  .skeleton-card {
+    display: flex;
+    gap: 14px;
+    align-items: flex-start;
+    padding: 16px 18px;
+    border: 1px solid rgba(59,42,99,.7);
+    border-radius: 20px;
+    background: rgba(255,255,255,.03);
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
+  }
+  .sk {
+    display: block;
+    border-radius: 7px;
+    background-image: linear-gradient(90deg, rgba(255,255,255,.05) 0%, rgba(182,164,214,.16) 45%, rgba(255,255,255,.05) 90%);
+    background-size: 220% 100%;
+    background-position: 120% 0;
+    animation: shimmer 1.5s linear infinite;
+  }
+  .sk-box { width: 20px; height: 20px; flex: 0 0 20px; border-radius: 6px; }
+  .sk-body { display: flex; flex-direction: column; gap: 9px; flex: 1 1 auto; }
+  .sk-line { height: 13px; }
+  .sk-line.sk-thin { height: 10px; opacity: .8; }
+  @keyframes shimmer { to { background-position: -120% 0; } }
+
+  /* ---------- Пусто / ошибка ---------- */
+  .placeholder-panel {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: 46px 26px 44px;
+    border: 1px dashed rgba(122,95,180,.55);
+    border-radius: 20px;
+    background-color: rgba(255,255,255,.04);
+    background-image: radial-gradient(90% 120% at 50% 0%, rgba(192,132,252,.1), transparent 60%);
+    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(12px);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.05);
+  }
+  .orbit-glyph {
+    position: relative;
+    width: 58px;
+    height: 58px;
+    margin-bottom: 16px;
+    display: grid;
+    place-items: center;
+  }
+  .orbit-glyph span {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 30%, #ffffff, var(--primary) 70%);
+    box-shadow: 0 0 16px rgba(192,132,252,.9);
+  }
+  .orbit-glyph::before {
+    content: "";
+    position: absolute;
+    inset: 4px;
+    border-radius: 50%;
+    border: 1px solid rgba(192,132,252,.55);
+    transform: rotate(-24deg) scaleY(.46);
+  }
+  .orbit-glyph::after {
+    content: "";
+    position: absolute;
+    top: 13px;
+    right: 2px;
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: var(--accent);
+    box-shadow: 0 0 9px var(--accent);
+  }
+  .placeholder-panel.is-error {
+    border-color: rgba(251,113,133,.45);
+    background-image: radial-gradient(90% 120% at 50% 0%, rgba(251,113,133,.12), transparent 60%);
+  }
+  .is-error .orbit-glyph span {
+    background: radial-gradient(circle at 35% 30%, #ffe4e8, var(--danger) 70%);
+    box-shadow: 0 0 16px rgba(251,113,133,.85);
+  }
+  .is-error .orbit-glyph::before { border-color: rgba(251,113,133,.55); }
+  .is-error .orbit-glyph::after { background: var(--warn); box-shadow: 0 0 9px var(--warn); }
+  .placeholder-title {
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: -.02em;
+    color: #fbf5ff;
+  }
+  .placeholder-text {
+    margin-top: 6px;
+    max-width: 40ch;
+    font-size: 13.5px;
+    color: var(--muted);
+    text-wrap: balance;
+  }
+  .placeholder-panel .btn {
+    margin-top: 20px;
+    height: 44px;
+    min-height: 44px;
+    padding: 0 18px;
+    font-family: var(--font-sans);
+    font-size: 13.5px;
+    font-weight: 700;
+    border-radius: 11px;
+  }
+  .placeholder-panel .btn-primary {
+    color: #190b28;
+    background: linear-gradient(135deg, #d8b4fe, #a855f7);
+    border: 1px solid rgba(255,255,255,.28);
+    box-shadow: 0 12px 30px -16px rgba(192,132,252,.95);
+  }
+  .placeholder-panel .btn-ghost {
+    color: #f2e9ff;
+    background: rgba(255,255,255,.06);
+    border: 1px solid rgba(255,255,255,.14);
+  }
+  .placeholder-panel .btn-ghost:hover { background: rgba(255,255,255,.12); }
+
+  /* ---------- Диалог ---------- */
+  .modal::backdrop {
+    background: rgba(6,3,14,.72);
+    -webkit-backdrop-filter: blur(6px);
+    backdrop-filter: blur(6px);
+  }
+  .modal-box.dialog-box {
+    width: min(520px, calc(100vw - 28px));
+    max-width: 520px;
+    max-height: calc(100dvh - 40px);
+    padding: 24px;
+    border: 1px solid rgba(192,132,252,.35);
+    border-radius: 22px;
+    background-color: #150c2b;
+    background-image:
+      radial-gradient(120% 80% at 80% -20%, rgba(192,132,252,.18), transparent 60%),
+      linear-gradient(180deg, #1c1136 0%, #120a24 100%);
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,.08),
+      0 46px 100px -42px rgba(192,132,252,.85);
+    color: var(--text);
+    overflow-y: auto;
+  }
+  .dialog-title {
+    font-size: 21px;
+    font-weight: 800;
+    letter-spacing: -.025em;
+    color: #fbf5ff;
+  }
+  .dialog-sub {
+    margin-top: 4px;
+    margin-bottom: 18px;
+    font-size: 13px;
+    color: var(--muted);
+  }
+  .field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: 14px;
+  }
+  .field-input,
+  .field-textarea {
+    width: 100%;
+    padding: 0 14px;
+    font-family: var(--font-sans);
+    font-size: 14px;
+    color: var(--text);
+    background: rgba(10,6,22,.62);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    transition: border-color .18s ease, box-shadow .18s ease;
+  }
+  .field-input { height: 44px; }
+  .field-textarea {
+    height: auto;
+    min-height: 92px;
+    padding: 11px 14px;
+    line-height: 1.5;
+    resize: vertical;
+  }
+  .field-input::placeholder,
+  .field-textarea::placeholder { color: #8f7cb5; }
+  .field-input:focus,
+  .field-textarea:focus {
+    border-color: rgba(34,211,238,.7);
+    box-shadow: 0 0 0 3px rgba(34,211,238,.14);
+    outline: none;
+  }
+  .field-date { color-scheme: dark; }
+  .field-date::-webkit-calendar-picker-indicator { opacity: .65; cursor: pointer; }
+  .field-error {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12.5px;
+    font-weight: 500;
+    color: #ffb7c3;
+  }
+  .field-error::before {
+    content: "";
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: var(--danger);
+    box-shadow: 0 0 8px rgba(251,113,133,.9);
+  }
+  .field-input[aria-invalid="true"] {
+    border-color: rgba(251,113,133,.8);
+    box-shadow: 0 0 0 3px rgba(251,113,133,.14);
+  }
+  .field-input[aria-invalid="true"]:focus {
+    border-color: rgba(251,113,133,.9);
+    box-shadow: 0 0 0 3px rgba(251,113,133,.2);
+  }
+  .modal-action.dialog-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 20px;
+  }
+  .dialog-actions .btn {
+    height: 40px;
+    min-height: 40px;
+    padding: 0 16px;
+    font-family: var(--font-sans);
+    font-size: 13.5px;
+    font-weight: 700;
+    border-radius: 11px;
+  }
+  .dialog-actions .btn-ghost {
+    color: #dccaf8;
+    background: rgba(255,255,255,.05);
+    border: 1px solid rgba(255,255,255,.13);
+  }
+  .dialog-actions .btn-ghost:hover { background: rgba(255,255,255,.11); color: #ffffff; }
+  .dialog-actions .btn-primary {
+    color: #190b28;
+    background: linear-gradient(135deg, #d8b4fe, #c084fc 55%, #a855f7);
+    border: 1px solid rgba(255,255,255,.28);
+    box-shadow: 0 12px 30px -16px rgba(192,132,252,.95);
+  }
+
+  /* ---------- Панель ревьювера ---------- */
+  .mock-panel {
+    position: fixed;
+    left: 16px;
+    bottom: 16px;
+    z-index: 60;
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    max-width: calc(100vw - 32px);
+    padding: 7px 9px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    background: rgba(11,11,18,.94);
+    border: 1px solid #31313f;
+    border-radius: 11px;
+    box-shadow: 0 20px 46px -22px rgba(0,0,0,.95);
+  }
+  .mock-title {
+    font-size: 10px;
+    letter-spacing: .17em;
+    color: #7d7d92;
+    padding-left: 3px;
+  }
+  .mock-buttons { display: flex; flex-wrap: wrap; gap: 4px; }
+  .mock-btn {
+    padding: 5px 9px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    line-height: 1.25;
+    color: #b8b8c9;
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 6px;
+    cursor: pointer;
+  }
+  .mock-btn:hover { color: #ffffff; background: rgba(255,255,255,.08); }
+  .mock-btn[aria-pressed="true"] {
+    color: #1a0b2e;
+    background: var(--primary);
+    border-color: var(--primary);
+    box-shadow: 0 0 14px rgba(192,132,252,.45);
+  }
+
+  /* ---------- Фокус ---------- */
+  a:focus-visible,
+  button:focus-visible,
+  input:focus-visible,
+  textarea:focus-visible,
+  select:focus-visible,
+  [tabindex]:focus-visible {
+    outline: 2px solid var(--accent) !important;
+    outline-offset: 2px;
+  }
+
+  /* ---------- Адаптив ---------- */
+  @media (max-width: 880px) {
+    .app-header {
+      grid-template-areas: "brand action" "search search";
+      grid-template-columns: minmax(0, 1fr) auto;
+      row-gap: 14px;
+      align-items: center;
+    }
+    .new-task { justify-self: end; }
+  }
+  @media (max-width: 700px) {
+    .shell { padding: 20px 16px 32px; gap: 16px; }
+    .task-row {
+      grid-template-columns: auto minmax(0, 1fr);
+      grid-template-areas: "check text" "actions actions";
+    }
+    .task-actions {
+      margin-top: 12px;
+      padding-left: 34px;
+      gap: 8px;
+    }
+    .task-actions .btn { flex: 1 1 0; padding: 0 10px; }
+    .stat { padding: 12px 14px 14px; }
+    .stat-value { font-size: 26px; }
+  }
+  @media (max-width: 480px) {
+    body { padding-bottom: 148px; }
+    .app-header {
+      grid-template-areas: "brand" "search" "action";
+      grid-template-columns: 1fr;
+      padding: 16px;
+      border-radius: 20px;
+    }
+    .new-task { width: 100%; justify-content: center; }
+    .summary { border-radius: 18px; }
+    .stat { padding: 12px 12px 14px; }
+    .stat-label { font-size: 9.5px; letter-spacing: .07em; }
+    .stat-value { font-size: 23px; }
+    .filters { gap: 6px; }
+    .filter { padding: 0 11px; font-size: 12.5px; }
+    .task-card .card-body { padding: 14px; }
+    .task-desc { font-size: 13px; }
+    .placeholder-panel { padding: 34px 18px 32px; }
+    .modal-box.dialog-box { padding: 18px; border-radius: 18px; }
+    .dialog-actions { flex-direction: column-reverse; }
+    .dialog-actions .btn { width: 100%; }
+    .mock-panel {
+      left: 8px;
+      right: 8px;
+      bottom: 8px;
+      max-width: none;
+      flex-direction: column;
+      align-items: stretch;
+      gap: 5px;
+      padding: 7px 8px;
+    }
+    .mock-title { padding-left: 2px; }
+    .mock-buttons { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 3px; }
+    .mock-btn { padding: 6px 2px; font-size: 10.5px; text-align: center; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .blob, .stars, .sk { animation: none !important; }
+    * { transition-duration: .01ms !important; }
+  }
+</style>
+</head>
+<body>
+
+<div class="nebula" aria-hidden="true">
+  <span class="blob blob-violet"></span>
+  <span class="blob blob-rose"></span>
+  <span class="blob blob-cyan"></span>
+  <span class="stars stars-a"></span>
+  <span class="stars stars-b"></span>
+  <span class="vignette"></span>
+</div>
+
+<div class="shell">
+
+  <header class="app-header">
+    <div class="brand">
+      <span class="mark" aria-hidden="true">
+        <span class="mark-core"></span>
+        <span class="mark-ring"></span>
+        <span class="mark-dot"></span>
+      </span>
+      <span class="brand-text">
+        <span class="brand-name">TaskFlow</span>
+        <span class="brand-sub">учебные задачи</span>
+      </span>
+    </div>
+
+    <div class="search-group">
+      <label class="field-label" for="search">Поиск</label>
+      <input id="search" class="input search-input" type="search" placeholder="Найти задачу…" autocomplete="off">
+    </div>
+
+    <button class="btn new-task" type="button" data-open-dialog>
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+        <path d="M7 2v10M2 7h10" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/>
+      </svg>
+      Новая задача
+    </button>
+  </header>
+
+  <section class="summary" aria-label="Сводка по задачам">
+    <div class="stat">
+      <span class="stat-label">Всего</span>
+      <span class="stat-value">4</span>
+    </div>
+    <div class="stat">
+      <span class="stat-label">Активных</span>
+      <span class="stat-value">3</span>
+    </div>
+    <div class="stat">
+      <span class="stat-label">Выполнено</span>
+      <span class="stat-value">1</span>
+    </div>
+  </section>
+
+  <div class="filters" role="group" aria-label="Фильтры задач">
+    <button class="btn filter" type="button" aria-pressed="true">Все (4)</button>
+    <button class="btn filter" type="button" aria-pressed="false">Активные (3)</button>
+    <button class="btn filter" type="button" aria-pressed="false">Выполненные (1)</button>
+  </div>
+
+  <main id="main" data-view="list">
+
+    <!-- СОСТОЯНИЕ: list -->
+    <section class="state" data-state="list" aria-label="Список задач">
+
+      <div class="alert toast-note" id="toast" role="status">
+        <span class="toast-icon" aria-hidden="true">
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+            <path d="M2.2 6.3 4.7 8.8 9.8 3.4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </span>
+        <p class="toast-text">Задача создана</p>
+        <button class="btn toast-close" type="button" id="toast-close" aria-label="Закрыть уведомление">
+          <svg width="10" height="10" viewBox="0 0 10 10" fill="none" aria-hidden="true">
+            <path d="M1.5 1.5 8.5 8.5M8.5 1.5 1.5 8.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+          </svg>
+        </button>
+      </div>
+
+      <ul class="task-list">
+
+        <li class="task-card card">
+          <div class="card-body">
+            <div class="task-row">
+              <label class="check-wrap">
+                <input type="checkbox" class="checkbox checkbox-primary" aria-label="Отметить «Сдать лабораторную по ИИ» как выполненную">
+              </label>
+              <div class="task-text">
+                <h3 class="task-title">Сдать лабораторную по ИИ</h3>
+                <p class="task-desc">Практика 8: новый фронтенд и клиентские тесты</p>
+                <div class="task-meta">
+                  <span class="badge meta-badge is-due">срок <b>21 ноя</b></span>
+                  <span class="badge meta-badge">создана <b>18 ноя</b></span>
+                </div>
+              </div>
+              <div class="task-actions">
+                <button class="btn btn-ghost btn-edit" type="button">Изменить</button>
+                <button class="btn btn-ghost btn-del" type="button">Удалить</button>
+              </div>
+            </div>
+          </div>
+        </li>
+
+        <li class="task-card card">
+          <div class="card-body">
+            <div class="task-row">
+              <label class="check-wrap">
+                <input type="checkbox" class="checkbox checkbox-primary" aria-label="Отметить «Подготовить доклад по физкультуре» как выполненную">
+              </label>
+              <div class="task-text">
+                <h3 class="task-title">Подготовить доклад по физкультуре</h3>
+                <p class="task-desc">Слайды и текст в Typst, проверить шапку</p>
+                <div class="task-meta">
+                  <span class="badge meta-badge is-due">срок <b>24 ноя</b></span>
+                  <span class="badge meta-badge">создана <b>17 ноя</b></span>
+                </div>
+              </div>
+              <div class="task-actions">
+                <button class="btn btn-ghost btn-edit" type="button">Изменить</button>
+                <button class="btn btn-ghost btn-del" type="button">Удалить</button>
+              </div>
+            </div>
+          </div>
+        </li>
+
+        <li class="task-card card">
+          <div class="card-body">
+            <div class="task-row">
+              <label class="check-wrap">
+                <input type="checkbox" class="checkbox checkbox-primary" aria-label="Отметить «Разобрать конспект по матанализу» как выполненную">
+              </label>
+              <div class="task-text">
+                <h3 class="task-title">Разобрать конспект по матанализу</h3>
+                <p class="task-desc">Пределы и непрерывность, задачи 1-14</p>
+                <div class="task-meta">
+                  <span class="badge meta-badge is-today">срок <b>сегодня</b></span>
+                  <span class="badge meta-badge">создана <b>16 ноя</b></span>
+                </div>
+              </div>
+              <div class="task-actions">
+                <button class="btn btn-ghost btn-edit" type="button">Изменить</button>
+                <button class="btn btn-ghost btn-del" type="button">Удалить</button>
+              </div>
+            </div>
+          </div>
+        </li>
+
+        <li class="task-card card is-done">
+          <div class="card-body">
+            <div class="task-row">
+              <label class="check-wrap">
+                <input type="checkbox" class="checkbox checkbox-primary" aria-label="Отметить «Заполнить БГД по осознанному потреблению» как выполненную" checked>
+              </label>
+              <div class="task-text">
+                <h3 class="task-title">Заполнить БГД по осознанному потреблению</h3>
+                <p class="task-desc">Категории, цифры и сокращения</p>
+                <div class="task-meta">
+                  <span class="badge meta-badge">срок <b>12 ноя</b></span>
+                  <span class="badge meta-badge">создана <b>10 ноя</b></span>
+                </div>
+              </div>
+              <div class="task-actions">
+                <button class="btn btn-ghost btn-edit" type="button">Изменить</button>
+                <button class="btn btn-ghost btn-del" type="button">Удалить</button>
+              </div>
+            </div>
+          </div>
+        </li>
+
+      </ul>
+    </section>
+
+    <!-- СОСТОЯНИЕ: loading -->
+    <section class="state" data-state="loading" hidden aria-label="Загрузка задач">
+      <p class="loading-line" role="status">
+        <span class="loading loading-spinner loading-xs" aria-hidden="true"></span>
+        Загружаем задачи…
+      </p>
+      <div class="skeleton-list" aria-hidden="true">
+        <div class="skeleton-card">
+          <span class="sk sk-box"></span>
+          <div class="sk-body">
+            <span class="sk sk-line" style="width:56%"></span>
+            <span class="sk sk-line sk-thin" style="width:84%"></span>
+            <span class="sk sk-line sk-thin" style="width:37%"></span>
+          </div>
+        </div>
+        <div class="skeleton-card">
+          <span class="sk sk-box"></span>
+          <div class="sk-body">
+            <span class="sk sk-line" style="width:64%"></span>
+            <span class="sk sk-line sk-thin" style="width:72%"></span>
+            <span class="sk sk-line sk-thin" style="width:44%"></span>
+          </div>
+        </div>
+        <div class="skeleton-card">
+          <span class="sk sk-box"></span>
+          <div class="sk-body">
+            <span class="sk sk-line" style="width:48%"></span>
+            <span class="sk sk-line sk-thin" style="width:88%"></span>
+            <span class="sk sk-line sk-thin" style="width:31%"></span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- СОСТОЯНИЕ: empty -->
+    <section class="state" data-state="empty" hidden aria-label="Пустой список">
+      <div class="placeholder-panel">
+        <span class="orbit-glyph" aria-hidden="true"><span></span></span>
+        <h2 class="placeholder-title">Задач пока нет</h2>
+        <p class="placeholder-text">Добавьте первую — она появится в этом списке.</p>
+        <button class="btn btn-primary" type="button" data-open-dialog>Новая задача</button>
+      </div>
+    </section>
+
+    <!-- СОСТОЯНИЕ: error -->
+    <section class="state" data-state="error" hidden aria-label="Ошибка загрузки">
+      <div class="placeholder-panel is-error">
+        <span class="orbit-glyph" aria-hidden="true"><span></span></span>
+        <h2 class="placeholder-title">Не удалось загрузить задачи</h2>
+        <p class="placeholder-text">Сервер не ответил. Проверьте соединение и попробуйте снова.</p>
+        <button class="btn btn-primary" type="button" data-retry>Повторить</button>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<!-- СОСТОЯНИЕ: dialog -->
+<dialog id="task-dialog" class="modal" aria-labelledby="dialog-title" aria-describedby="dialog-sub">
+  <div class="modal-box dialog-box">
+    <h2 class="dialog-title" id="dialog-title">Новая задача</h2>
+    <p class="dialog-sub" id="dialog-sub">Название обязательно, остальное можно заполнить позже.</p>
+
+    <form id="task-form" novalidate>
+      <div class="field">
+        <label class="field-label" for="task-title">Название</label>
+        <input id="task-title" name="title" class="input field-input" type="text"
+               placeholder="Например: сдать отчёт по практике" autocomplete="off"
+               aria-describedby="title-error" required>
+        <p class="field-error" id="title-error" role="alert" hidden>Введите название задачи</p>
+      </div>
+
+      <div class="field">
+        <label class="field-label" for="task-desc">Описание</label>
+        <textarea id="task-desc" name="description" class="textarea field-textarea" rows="3"
+                  placeholder="Детали, ссылки, что именно сделать"></textarea>
+      </div>
+
+      <div class="field">
+        <label class="field-label" for="task-due">Срок</label>
+        <input id="task-due" name="due" class="input field-input field-date" type="date">
+      </div>
+
+      <div class="modal-action dialog-actions">
+        <button class="btn btn-ghost" type="button" data-close-dialog>Отмена</button>
+        <button class="btn btn-primary" type="submit">Создать задачу</button>
+      </div>
+    </form>
+  </div>
+</dialog>
+
+<aside class="mock-panel" aria-label="Панель состояний макета">
+  <span class="mock-title">МАКЕТ</span>
+  <div class="mock-buttons" role="group" aria-label="Переключение состояний макета">
+    <button class="mock-btn" type="button" data-view-target="list" aria-pressed="true">Список</button>
+    <button class="mock-btn" type="button" data-view-target="loading" aria-pressed="false">Загрузка</button>
+    <button class="mock-btn" type="button" data-view-target="empty" aria-pressed="false">Пусто</button>
+    <button class="mock-btn" type="button" data-view-target="error" aria-pressed="false">Ошибка</button>
+    <button class="mock-btn" type="button" data-view-target="dialog" aria-pressed="false">Диалог</button>
+  </div>
+</aside>
+
+<script>
+(function () {
+  var main = document.getElementById('main');
+  var dialog = document.getElementById('task-dialog');
+  var form = document.getElementById('task-form');
+  var titleInput = document.getElementById('task-title');
+  var titleError = document.getElementById('title-error');
+  var toast = document.getElementById('toast');
+  var mockButtons = Array.prototype.slice.call(document.querySelectorAll('.mock-btn'));
+  var dialogOpen = false;
+
+  function syncMockPanel(view) {
+    mockButtons.forEach(function (btn) {
+      var target = btn.getAttribute('data-view-target');
+      var pressed = target === 'dialog' ? dialogOpen : (!dialogOpen && target === view);
+      btn.setAttribute('aria-pressed', pressed ? 'true' : 'false');
+    });
+  }
+
+  function setView(view) {
+    main.setAttribute('data-view', view);
+    Array.prototype.forEach.call(document.querySelectorAll('[data-state]'), function (section) {
+      section.hidden = section.getAttribute('data-state') !== view;
+    });
+    syncMockPanel(view);
+  }
+
+  function clearTitleError() {
+    titleError.hidden = true;
+    titleInput.removeAttribute('aria-invalid');
+  }
+
+  function openDialog() {
+    clearTitleError();
+    toast.hidden = true;
+    if (!dialog.open) {
+      dialog.showModal();
+      dialogOpen = dialog.open;
+      window.requestAnimationFrame(function () { titleInput.focus(); });
+    }
+    syncMockPanel(main.getAttribute('data-view'));
+  }
+
+  mockButtons.forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var target = btn.getAttribute('data-view-target');
+      if (dialog.open) { dialog.close(); dialogOpen = false; }
+      if (target === 'dialog') {
+        setView('list');
+        openDialog();
+        return;
+      }
+      setView(target);
+    });
+  });
+
+  Array.prototype.forEach.call(document.querySelectorAll('[data-open-dialog]'), function (btn) {
+    btn.addEventListener('click', function () {
+      setView('list');
+      openDialog();
+    });
+  });
+
+  Array.prototype.forEach.call(document.querySelectorAll('[data-close-dialog]'), function (btn) {
+    btn.addEventListener('click', function () { dialog.close(); });
+  });
+
+  Array.prototype.forEach.call(document.querySelectorAll('[data-retry]'), function (btn) {
+    btn.addEventListener('click', function () { setView('list'); });
+  });
+
+  /* Клик по подложке закрывает диалог; Esc закрывает нативно */
+  dialog.addEventListener('click', function (event) {
+    if (event.target === dialog) { dialog.close(); }
+  });
+  dialog.addEventListener('close', function () {
+    dialogOpen = false;
+    clearTitleError();
+    syncMockPanel(main.getAttribute('data-view'));
+  });
+
+  titleInput.addEventListener('input', function () {
+    if (titleInput.value.trim() !== '') { clearTitleError(); }
+  });
+
+  form.addEventListener('submit', function (event) {
+    event.preventDefault();
+    if (titleInput.value.trim() === '') {
+      titleError.hidden = false;
+      titleInput.setAttribute('aria-invalid', 'true');
+      titleInput.focus();
+      return;
+    }
+    dialog.close();
+    setView('list');
+    form.reset();
+    clearTitleError();
+    toast.hidden = false;
+  });
+
+  document.getElementById('toast-close').addEventListener('click', function () {
+    toast.hidden = true;
+  });
+
+  var filters = Array.prototype.slice.call(document.querySelectorAll('.filter'));
+  filters.forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      filters.forEach(function (other) { other.setAttribute('aria-pressed', 'false'); });
+      btn.setAttribute('aria-pressed', 'true');
+    });
+  });
+
+  Array.prototype.forEach.call(document.querySelectorAll('.task-card'), function (card) {
+    var checkbox = card.querySelector('.checkbox');
+    if (!checkbox) { return; }
+    checkbox.addEventListener('change', function () {
+      card.classList.toggle('is-done', checkbox.checked);
+    });
+  });
+})();
+</script>
+</body>
+</html>

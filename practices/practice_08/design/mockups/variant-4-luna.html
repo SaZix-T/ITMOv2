@@ -1,0 +1,1246 @@
+<!DOCTYPE html>
+<html lang="ru" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark">
+<title>TaskFlow — Луна</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&family=JetBrains+Mono:wght@400;500&family=Unbounded:wght@500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
+
+<style>
+/* ── Палитра и переменные Pico ─────────────────────────────────────────── */
+:root[data-theme="dark"] {
+  --bg: #080b10;
+  --surface: #0e141c;
+  --surface-2: #111a24;
+  --line: #1e2937;
+  --fg: #e7eef7;
+  --muted: #8fa0b5;
+  --dim: #7f93a9;
+  --accent: #93c5fd;
+  --accent-2: #c4b5fd;
+  --danger: #fda4af;
+  --warn: #fcd34d;
+
+  --pico-background-color: var(--bg);
+  --pico-color: var(--fg);
+  --pico-muted-color: var(--muted);
+  --pico-muted-border-color: var(--line);
+
+  --pico-primary: var(--accent);
+  --pico-primary-background: var(--accent);
+  --pico-primary-border: var(--accent);
+  --pico-primary-hover: #cfe4ff;
+  --pico-primary-hover-background: #b9d8fc;
+  --pico-primary-hover-border: #b9d8fc;
+  --pico-primary-focus: rgba(147, 197, 253, .25);
+  --pico-primary-inverse: #05101c;
+
+  --pico-secondary: var(--muted);
+  --pico-secondary-background: #16202c;
+  --pico-secondary-border: #26343f;
+  --pico-secondary-inverse: var(--fg);
+  --pico-secondary-hover: #1c2836;
+
+  --pico-card-background-color: var(--surface);
+  --pico-card-sectioning-background-color: var(--surface-2);
+  --pico-card-border-color: var(--line);
+  --pico-card-box-shadow: none;
+
+  --pico-form-element-background-color: #0a1017;
+  --pico-form-element-border-color: var(--line);
+  --pico-form-element-color: var(--fg);
+  --pico-form-element-placeholder-color: #6d8199;
+  --pico-form-element-active-background-color: #0a1017;
+  --pico-form-element-active-border-color: var(--accent);
+  --pico-form-element-focus-color: transparent;
+
+  --pico-mark-background-color: rgba(147, 197, 253, .10);
+  --pico-mark-color: #cfe2ff;
+
+  --pico-border-radius: 18px;
+  --pico-font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --pico-font-family-monospace: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+  --pico-font-size: 100%;
+  --pico-line-height: 1.55;
+}
+
+/* ── База ──────────────────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background:
+    radial-gradient(1100px 620px at 78% -14%, #0c1421 0%, rgba(8, 11, 16, 0) 62%),
+    var(--bg);
+  color: var(--fg);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, h4 {
+  font-family: 'Unbounded', 'Inter', sans-serif;
+  font-weight: 500;
+  letter-spacing: -.015em;
+  color: var(--fg);
+}
+
+p { margin: 0; }
+
+.sr-only {
+  position: absolute;
+  width: 1px; height: 1px;
+  padding: 0; margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ── Декор: луна и редкие звёзды ───────────────────────────────────────── */
+.sky {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.moon-glow {
+  position: absolute;
+  top: -330px; right: -270px;
+  width: 790px; height: 790px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 50% 50%,
+    rgba(196, 181, 253, .16) 0%,
+    rgba(147, 197, 253, .10) 40%,
+    rgba(147, 197, 253, .03) 62%,
+    transparent 72%);
+  filter: blur(24px);
+}
+
+.moon-disc {
+  position: absolute;
+  top: -158px; right: -136px;
+  width: 404px; height: 404px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 38% 32%,
+    #27354b 0%,
+    #17212f 46%,
+    #0d141d 80%);
+  border: 1px solid rgba(147, 197, 253, .10);
+  box-shadow:
+    0 0 90px 12px rgba(147, 197, 253, .10),
+    inset -16px -20px 64px rgba(4, 7, 11, .85),
+    inset 10px 12px 42px rgba(196, 181, 253, .10);
+  opacity: .9;
+}
+
+.moon-ring {
+  position: absolute;
+  top: -216px; right: -184px;
+  width: 520px; height: 520px;
+  border-radius: 50%;
+  border: 1px solid rgba(147, 197, 253, .09);
+  transform: rotate(-14deg) scaleY(.86);
+}
+
+.star {
+  position: absolute;
+  width: 2px; height: 2px;
+  border-radius: 50%;
+  background: #dbeafe;
+  opacity: .45;
+  box-shadow: 0 0 7px 1px rgba(219, 234, 254, .35);
+}
+
+.star.s1 { top: 16%; left: 9%; }
+.star.s2 { top: 38%; left: 5%; opacity: .3; }
+.star.s3 { top: 62%; right: 7%; opacity: .35; }
+.star.s4 { top: 84%; left: 13%; opacity: .22; }
+.star.s5 { top: 8%; left: 41%; opacity: .28; }
+
+/* ── Раскладка ─────────────────────────────────────────────────────────── */
+.wrap {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 820px;
+  margin-inline: auto;
+  padding-inline: clamp(18px, 4.5vw, 32px);
+}
+
+/* ── Шапка ─────────────────────────────────────────────────────────────── */
+.masthead {
+  padding-top: clamp(34px, 6vw, 60px);
+  padding-bottom: 0;
+}
+
+.masthead-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+
+.mark {
+  position: relative;
+  flex: 0 0 44px;
+  width: 44px; height: 44px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 33% 28%, #eaf3ff 0%, #93c5fd 46%, #6e8cba 100%);
+  box-shadow: 0 0 26px -4px rgba(147, 197, 253, .55);
+}
+
+.mark::before {
+  content: "";
+  position: absolute;
+  inset: -7px;
+  border-radius: 50%;
+  border: 1px solid rgba(147, 197, 253, .45);
+  transform: rotate(-22deg) scaleY(.34);
+}
+
+.brand-text { display: flex; flex-direction: column; gap: 5px; }
+
+.brand-text h1 {
+  margin: 0;
+  font-size: clamp(29px, 5.2vw, 38px);
+  line-height: 1;
+}
+
+.tagline {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11.5px;
+  letter-spacing: .14em;
+  color: var(--dim);
+}
+
+/* ── Поиск ─────────────────────────────────────────────────────────────── */
+.search { margin-top: 34px; }
+
+.search label {
+  display: block;
+  margin-bottom: 10px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10.5px;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+  color: var(--dim);
+}
+
+.search input {
+  width: 100%;
+  height: 54px;
+  margin: 0;
+  padding: 0 18px;
+  font-size: 15px;
+  border-radius: 18px;
+}
+
+/* ── Кнопки ────────────────────────────────────────────────────────────── */
+button { width: auto; }
+
+.btn-new {
+  margin: 0;
+  padding: 13px 20px;
+  font-size: 13.5px;
+  font-weight: 500;
+  border-radius: 18px;
+  white-space: nowrap;
+}
+
+.btn-sm {
+  margin: 0;
+  padding: 8px 14px;
+  font-size: 12.5px;
+  font-weight: 500;
+  border-radius: 12px;
+  line-height: 1.3;
+}
+
+.btn-danger {
+  --pico-primary: var(--danger);
+  --pico-primary-hover: #fecdd3;
+  --pico-primary-border: rgba(253, 164, 175, .45);
+  --pico-primary-hover-border: var(--danger);
+  --pico-primary-focus: rgba(253, 164, 175, .22);
+}
+
+/* ── Состояния экрана ──────────────────────────────────────────────────── */
+main { padding-bottom: 150px; }
+
+.view { display: none; }
+main[data-view="list"] #view-list,
+main[data-view="loading"] #view-loading,
+main[data-view="empty"] #view-empty,
+main[data-view="error"] #view-error { display: block; }
+
+/* ── Сводка ────────────────────────────────────────────────────────────── */
+.stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  margin: 30px 0 0;
+  padding: 18px 0;
+  border-block: 1px solid var(--line);
+}
+
+.stats > div {
+  padding-inline: 22px;
+  border-left: 1px solid var(--line);
+}
+
+.stats > div:first-child { padding-left: 0; border-left: 0; }
+
+.stats dt {
+  margin: 0;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  color: var(--dim);
+}
+
+.stats dd {
+  margin: 7px 0 0;
+  font-family: 'Unbounded', sans-serif;
+  font-size: 26px;
+  line-height: 1;
+  color: var(--fg);
+}
+
+.stats .num-active { color: var(--accent); }
+.stats .num-done { color: var(--muted); }
+
+/* ── Фильтры ───────────────────────────────────────────────────────────── */
+.filters {
+  width: fit-content;
+  max-width: 100%;
+  margin: 26px 0 0;
+  padding: 0;
+  border: 0;
+}
+
+.filters button {
+  flex: 0 0 auto;
+  width: auto;
+  padding: 12px 18px;
+  font-family: 'Inter', sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.2;
+  color: var(--muted);
+  background: transparent;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+}
+
+.filters button:hover {
+  color: var(--fg);
+  background: #0f1720;
+  border-color: #2b3a4c;
+}
+
+.filters button[aria-pressed="true"] {
+  color: #dceafe;
+  background: rgba(147, 197, 253, .11);
+  border-color: rgba(147, 197, 253, .45);
+}
+
+/* ── Уведомление ───────────────────────────────────────────────────────── */
+.toast {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 22px;
+  padding: 11px 10px 11px 16px;
+  background: rgba(147, 197, 253, .06);
+  border: 1px solid rgba(147, 197, 253, .24);
+  border-radius: 14px;
+}
+
+.toast[hidden] { display: none; }
+
+.toast-dot {
+  flex: 0 0 7px;
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 12px 1px rgba(147, 197, 253, .8);
+}
+
+.toast p {
+  flex: 1;
+  font-size: 13.5px;
+  color: #d7e6f8;
+}
+
+.toast button {
+  margin: 0;
+  padding: 6px 10px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10.5px;
+  letter-spacing: .06em;
+  color: var(--dim);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 9px;
+}
+
+.toast button:hover {
+  color: var(--fg);
+  background: rgba(147, 197, 253, .08);
+  border-color: rgba(147, 197, 253, .2);
+}
+
+/* ── Карточки задач ────────────────────────────────────────────────────── */
+.tasks {
+  display: grid;
+  gap: 14px;
+  margin-top: 22px;
+}
+
+.task {
+  margin: 0;
+  padding: 22px 24px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  box-shadow: none;
+  transition: border-color .18s ease, background .18s ease;
+}
+
+.task:hover { border-color: #27364a; }
+
+.task-top {
+  display: flex;
+  align-items: flex-start;
+  gap: 15px;
+}
+
+.task-check {
+  flex: 0 0 22px;
+  width: 22px; height: 22px;
+  margin: 3px 0 0;
+  padding: 0;
+  appearance: none;
+  -webkit-appearance: none;
+  border: 1px solid #33455b;
+  border-radius: 7px;
+  background: #0a1017;
+  cursor: pointer;
+  position: relative;
+  transition: background .15s ease, border-color .15s ease;
+}
+
+.task-check:hover { border-color: #4a6480; }
+
+.task-check:checked {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+.task-check:checked::after {
+  content: "";
+  position: absolute;
+  left: 7px; top: 3px;
+  width: 6px; height: 11px;
+  border: solid #05101c;
+  border-width: 0 2px 2px 0;
+  transform: rotate(40deg);
+}
+
+.task-body { flex: 1; min-width: 0; }
+
+.task-title {
+  margin: 0 0 6px;
+  font-family: 'Unbounded', sans-serif;
+  font-size: 17px;
+  font-weight: 500;
+  line-height: 1.4;
+  letter-spacing: -.01em;
+}
+
+.task-desc {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--muted);
+}
+
+.task-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  flex-wrap: wrap;
+  margin-top: 18px;
+  padding-top: 16px;
+  padding-left: 37px;
+  border-top: 1px solid rgba(30, 41, 55, .75);
+}
+
+.task-meta {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  flex-wrap: wrap;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11.5px;
+  color: var(--muted);
+}
+
+.meta { display: inline-flex; align-items: center; gap: 8px; }
+
+.meta-k {
+  font-size: 10px;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--dim);
+}
+
+mark.due {
+  padding: 3px 8px;
+  border-radius: 7px;
+  background: rgba(147, 197, 253, .10);
+  color: #cfe2ff;
+  font-size: 11.5px;
+  font-weight: 500;
+}
+
+mark.due-today {
+  background: rgba(252, 211, 77, .13);
+  color: var(--warn);
+}
+
+.task-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+
+/* выполнено */
+.task.is-done { background: #0c1219; }
+
+.task.is-done .task-title {
+  color: #7f93a9;
+  text-decoration: line-through;
+  text-decoration-thickness: 1px;
+  text-decoration-color: #55697f;
+}
+
+.task.is-done .task-desc { color: #788ba1; }
+
+/* ── Пусто / ошибка ────────────────────────────────────────────────────── */
+.state {
+  margin: 30px 0 0;
+  padding: 54px 32px;
+  display: grid;
+  justify-items: center;
+  gap: 14px;
+  text-align: center;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  box-shadow: none;
+}
+
+.ring {
+  position: relative;
+  width: 62px; height: 62px;
+  margin-bottom: 6px;
+  border-radius: 50%;
+  border: 1px dashed rgba(147, 197, 253, .45);
+}
+
+.ring::after {
+  content: "";
+  position: absolute;
+  top: 50%; left: 50%;
+  width: 9px; height: 9px;
+  margin: -4.5px 0 0 -4.5px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 14px 2px rgba(147, 197, 253, .55);
+}
+
+.ring-error { border-style: solid; border-color: rgba(253, 164, 175, .4); }
+
+.ring-error::after {
+  width: 26px; height: 1px;
+  margin: -1px 0 0 -13px;
+  border-radius: 0;
+  background: var(--danger);
+  box-shadow: 0 0 12px 1px rgba(253, 164, 175, .45);
+  transform: rotate(-45deg);
+}
+
+.state h2 { margin: 0; font-size: 21px; }
+
+.state p {
+  max-width: 40ch;
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--muted);
+}
+
+.state button { margin: 8px 0 0; padding: 11px 18px; font-size: 13px; }
+
+/* ── Загрузка ──────────────────────────────────────────────────────────── */
+.loading-note {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 30px 0 0;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11.5px;
+  letter-spacing: .06em;
+  color: var(--muted);
+}
+
+.loading-note::before {
+  content: "";
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+  animation: pulse 1.4s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: .25; box-shadow: none; }
+  50% { opacity: 1; box-shadow: 0 0 10px 2px rgba(147, 197, 253, .5); }
+}
+
+.sk { pointer-events: none; }
+
+.sk-box {
+  flex: 0 0 22px;
+  width: 22px; height: 22px;
+  margin-top: 3px;
+  border-radius: 7px;
+  background: #131c26;
+}
+
+.sk-line {
+  height: 11px;
+  border-radius: 7px;
+  background: linear-gradient(90deg, #121b25 0%, #1a2431 45%, #121b25 90%);
+  background-size: 220% 100%;
+  animation: shimmer 1.7s linear infinite;
+}
+
+@keyframes shimmer {
+  from { background-position: 120% 0; }
+  to { background-position: -120% 0; }
+}
+
+/* ── Диалог ────────────────────────────────────────────────────────────── */
+dialog#task-dialog {
+  width: min(520px, calc(100% - 28px));
+  max-width: 520px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
+dialog::backdrop {
+  background: rgba(4, 7, 11, .74);
+  backdrop-filter: blur(5px);
+}
+
+dialog#task-dialog > article {
+  position: relative;
+  width: 100%;
+  max-width: 100%;
+  margin: 0;
+  padding: 28px;
+  background: var(--surface);
+  border: 1px solid #253243;
+  border-radius: 22px;
+  box-shadow: 0 34px 90px -24px rgba(0, 0, 0, .85);
+}
+
+.dlg-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 22px;
+}
+
+.dlg-head h2 { margin: 0; font-size: 20px; }
+
+.dlg-close {
+  margin: 0;
+  padding: 0;
+  width: 30px; height: 30px;
+  flex: 0 0 30px;
+  display: grid;
+  place-items: center;
+  font-size: 17px;
+  line-height: 1;
+  color: var(--muted);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 50%;
+}
+
+.dlg-close:hover {
+  color: var(--fg);
+  background: #151f2a;
+  border-color: var(--line);
+}
+
+.field { margin-bottom: 16px; }
+
+.field label,
+#task-form label {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 12.5px;
+  font-weight: 500;
+  color: #c3d1e0;
+}
+
+.field input,
+.field textarea {
+  margin: 0;
+  font-size: 14.5px;
+  border-radius: 14px;
+}
+
+.field input { padding: 13px 15px; }
+.field textarea { padding: 13px 15px; resize: vertical; min-height: 92px; }
+
+.field input[name="title"] { font-size: 15px; }
+
+input[aria-invalid="true"] {
+  --pico-form-element-border-color: var(--danger);
+  --pico-form-element-active-border-color: var(--danger);
+  border-color: var(--danger);
+}
+
+.field-error {
+  display: none;
+  margin-top: 7px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11.5px;
+  color: var(--danger);
+}
+
+.field-error:not([hidden]) { display: block; }
+
+.dlg-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 24px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
+.dlg-actions button {
+  width: auto;
+  margin: 0;
+  padding: 12px 18px;
+  font-size: 13px;
+}
+
+.dlg-actions .outline { --pico-primary: var(--muted); --pico-primary-border: #2b3a4c; }
+
+/* ── Панель макета ─────────────────────────────────────────────────────── */
+.mock {
+  position: fixed;
+  left: 20px; bottom: 20px;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  max-width: calc(100vw - 40px);
+  padding: 10px 13px;
+  background: rgba(9, 13, 19, .93);
+  border: 1px solid #24313f;
+  border-radius: 14px;
+  backdrop-filter: blur(12px);
+  box-shadow: 0 18px 40px -20px rgba(0, 0, 0, .9);
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.mock-label {
+  font-size: 10px;
+  letter-spacing: .2em;
+  color: #7f93a9;
+}
+
+.mock-btns { display: flex; gap: 4px; flex-wrap: wrap; }
+
+.mock-btns button {
+  margin: 0;
+  padding: 5px 9px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10.5px;
+  font-weight: 500;
+  line-height: 1.4;
+  letter-spacing: .02em;
+  color: #a8b8c9;
+  background: transparent;
+  border: 1px solid #25323f;
+  border-radius: 8px;
+}
+
+.mock-btns button:hover {
+  color: #fff;
+  background: #141c26;
+  border-color: #35465a;
+}
+
+.mock-btns button[aria-pressed="true"] {
+  color: #dbeafe;
+  background: #1b2836;
+  border-color: rgba(147, 197, 253, .5);
+}
+
+/* ── Фокус ─────────────────────────────────────────────────────────────── */
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+input:focus, textarea:focus, button:focus { box-shadow: none; }
+input:focus-visible, textarea:focus-visible, button:focus-visible { box-shadow: none; }
+
+/* ── Адаптив ───────────────────────────────────────────────────────────── */
+@media (max-width: 640px) {
+  .masthead-row { gap: 18px; }
+  .btn-new { width: 100%; }
+
+  .stats { margin-top: 26px; }
+  .stats > div { padding-inline: 14px; }
+  .stats dd { font-size: 22px; }
+
+  .task { padding: 20px 18px; }
+
+  .task-foot {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 14px;
+    padding-left: 0;
+  }
+
+  .task-actions { width: 100%; }
+  .task-actions button { flex: 1; }
+
+  dialog article { padding: 22px 20px; }
+  .dlg-actions button { flex: 1; }
+
+  .mock {
+    left: 12px; right: 12px; bottom: 12px;
+    max-width: none;
+    gap: 8px;
+    padding: 9px 10px;
+  }
+
+  .mock-btns { gap: 3px; }
+  .mock-btns button { padding: 5px 7px; font-size: 10px; }
+}
+
+@media (max-width: 420px) {
+  .stats > div { padding-inline: 10px; }
+  .stats dt { font-size: 9.5px; letter-spacing: .08em; }
+  .stats dd { font-size: 20px; }
+  .brand { gap: 14px; }
+  .mark { flex-basis: 38px; width: 38px; height: 38px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+  }
+}
+</style>
+</head>
+<body>
+
+<!-- Декор -->
+<div class="sky" aria-hidden="true">
+  <div class="moon-glow"></div>
+  <div class="moon-ring"></div>
+  <div class="moon-disc"></div>
+  <span class="star s1"></span>
+  <span class="star s2"></span>
+  <span class="star s3"></span>
+  <span class="star s4"></span>
+  <span class="star s5"></span>
+</div>
+
+<!-- Шапка -->
+<header class="wrap masthead">
+  <div class="masthead-row">
+    <div class="brand">
+      <span class="mark" aria-hidden="true"></span>
+      <div class="brand-text">
+        <h1>TaskFlow</h1>
+        <p class="tagline">учебные задачи</p>
+      </div>
+    </div>
+    <button type="button" class="btn-new" data-open-new>Новая задача</button>
+  </div>
+
+  <div class="search">
+    <label for="search">Поиск</label>
+    <input type="search" id="search" name="search" placeholder="Найти задачу…" autocomplete="off">
+  </div>
+</header>
+
+<main class="wrap" data-view="list">
+
+  <!-- ── Список ─────────────────────────────────────────────────────── -->
+  <section class="view" id="view-list" aria-label="Список задач">
+
+    <dl class="stats">
+      <div>
+        <dt>Всего</dt>
+        <dd>8</dd>
+      </div>
+      <div>
+        <dt>Активных</dt>
+        <dd class="num-active">5</dd>
+      </div>
+      <div>
+        <dt>Выполнено</dt>
+        <dd class="num-done">3</dd>
+      </div>
+    </dl>
+
+    <fieldset role="group" class="filters" aria-label="Фильтр задач">
+      <button type="button" aria-pressed="true">Все (8)</button>
+      <button type="button" aria-pressed="false">Активные (5)</button>
+      <button type="button" aria-pressed="false">Выполненные (3)</button>
+    </fieldset>
+
+    <div class="toast" id="toast" role="status">
+      <span class="toast-dot" aria-hidden="true"></span>
+      <p>Задача создана</p>
+      <button type="button" id="toast-close" aria-label="Скрыть уведомление">Скрыть</button>
+    </div>
+
+    <div class="tasks">
+
+      <article class="task">
+        <div class="task-top">
+          <input class="task-check" type="checkbox" id="task-1" name="task-1">
+          <label class="sr-only" for="task-1">Отметить «Сдать лабораторную по ИИ» как выполненную</label>
+          <div class="task-body">
+            <h2 class="task-title">Сдать лабораторную по ИИ</h2>
+            <p class="task-desc">Практика 8: новый фронтенд и клиентские тесты</p>
+          </div>
+        </div>
+        <div class="task-foot">
+          <div class="task-meta">
+            <span class="meta"><span class="meta-k">Срок</span> <mark class="due">21 ноя</mark></span>
+            <span class="meta"><span class="meta-k">Создана</span> <span>18 ноя</span></span>
+          </div>
+          <div class="task-actions">
+            <button type="button" class="outline btn-sm">Изменить</button>
+            <button type="button" class="outline btn-sm btn-danger">Удалить</button>
+          </div>
+        </div>
+      </article>
+
+      <article class="task">
+        <div class="task-top">
+          <input class="task-check" type="checkbox" id="task-2" name="task-2">
+          <label class="sr-only" for="task-2">Отметить «Подготовить доклад по физкультуре» как выполненную</label>
+          <div class="task-body">
+            <h2 class="task-title">Подготовить доклад по физкультуре</h2>
+            <p class="task-desc">Слайды и текст в Typst, проверить шапку</p>
+          </div>
+        </div>
+        <div class="task-foot">
+          <div class="task-meta">
+            <span class="meta"><span class="meta-k">Срок</span> <mark class="due">24 ноя</mark></span>
+            <span class="meta"><span class="meta-k">Создана</span> <span>17 ноя</span></span>
+          </div>
+          <div class="task-actions">
+            <button type="button" class="outline btn-sm">Изменить</button>
+            <button type="button" class="outline btn-sm btn-danger">Удалить</button>
+          </div>
+        </div>
+      </article>
+
+      <article class="task">
+        <div class="task-top">
+          <input class="task-check" type="checkbox" id="task-3" name="task-3">
+          <label class="sr-only" for="task-3">Отметить «Разобрать конспект по матанализу» как выполненную</label>
+          <div class="task-body">
+            <h2 class="task-title">Разобрать конспект по матанализу</h2>
+            <p class="task-desc">Пределы и непрерывность, задачи 1-14</p>
+          </div>
+        </div>
+        <div class="task-foot">
+          <div class="task-meta">
+            <span class="meta"><span class="meta-k">Срок</span> <mark class="due due-today">сегодня</mark></span>
+            <span class="meta"><span class="meta-k">Создана</span> <span>16 ноя</span></span>
+          </div>
+          <div class="task-actions">
+            <button type="button" class="outline btn-sm">Изменить</button>
+            <button type="button" class="outline btn-sm btn-danger">Удалить</button>
+          </div>
+        </div>
+      </article>
+
+      <article class="task is-done">
+        <div class="task-top">
+          <input class="task-check" type="checkbox" id="task-4" name="task-4" checked>
+          <label class="sr-only" for="task-4">Отметить «Заполнить БГД по осознанному потреблению» как выполненную</label>
+          <div class="task-body">
+            <h2 class="task-title">Заполнить БГД по осознанному потреблению</h2>
+            <p class="task-desc">Категории, цифры и сокращения</p>
+          </div>
+        </div>
+        <div class="task-foot">
+          <div class="task-meta">
+            <span class="meta"><span class="meta-k">Срок</span> <mark class="due">12 ноя</mark></span>
+            <span class="meta"><span class="meta-k">Создана</span> <span>10 ноя</span></span>
+          </div>
+          <div class="task-actions">
+            <button type="button" class="outline btn-sm">Изменить</button>
+            <button type="button" class="outline btn-sm btn-danger">Удалить</button>
+          </div>
+        </div>
+      </article>
+
+    </div>
+  </section>
+
+  <!-- ── Загрузка ───────────────────────────────────────────────────── -->
+  <section class="view" id="view-loading" aria-label="Загрузка задач">
+    <p class="loading-note" role="status">Загружаем задачи…</p>
+
+    <div class="tasks">
+      <article class="task sk" aria-hidden="true">
+        <div class="task-top">
+          <div class="sk-box"></div>
+          <div class="task-body">
+            <div class="sk-line" style="width: 56%"></div>
+            <div class="sk-line" style="width: 84%; margin-top: 11px"></div>
+            <div class="sk-line" style="width: 32%; margin-top: 11px"></div>
+          </div>
+        </div>
+      </article>
+
+      <article class="task sk" aria-hidden="true">
+        <div class="task-top">
+          <div class="sk-box"></div>
+          <div class="task-body">
+            <div class="sk-line" style="width: 68%"></div>
+            <div class="sk-line" style="width: 52%; margin-top: 11px"></div>
+            <div class="sk-line" style="width: 28%; margin-top: 11px"></div>
+          </div>
+        </div>
+      </article>
+
+      <article class="task sk" aria-hidden="true">
+        <div class="task-top">
+          <div class="sk-box"></div>
+          <div class="task-body">
+            <div class="sk-line" style="width: 48%"></div>
+            <div class="sk-line" style="width: 76%; margin-top: 11px"></div>
+            <div class="sk-line" style="width: 34%; margin-top: 11px"></div>
+          </div>
+        </div>
+      </article>
+    </div>
+  </section>
+
+  <!-- ── Пусто ──────────────────────────────────────────────────────── -->
+  <section class="view" id="view-empty" aria-label="Список пуст">
+    <article class="state">
+      <div class="ring" aria-hidden="true"></div>
+      <h2>Задач пока нет</h2>
+      <p>Добавьте первую — она появится в этом списке.</p>
+      <button type="button" data-open-new>Новая задача</button>
+    </article>
+  </section>
+
+  <!-- ── Ошибка ─────────────────────────────────────────────────────── -->
+  <section class="view" id="view-error" aria-label="Ошибка загрузки">
+    <article class="state">
+      <div class="ring ring-error" aria-hidden="true"></div>
+      <h2>Не удалось загрузить задачи</h2>
+      <p>Сервер не ответил. Проверьте соединение и попробуйте снова.</p>
+      <button type="button" id="retry">Повторить</button>
+    </article>
+  </section>
+
+</main>
+
+<!-- Диалог -->
+<dialog id="task-dialog" aria-labelledby="dlg-title" aria-modal="true">
+  <article>
+    <div class="dlg-head">
+      <h2 id="dlg-title">Новая задача</h2>
+      <button type="button" class="dlg-close" data-close aria-label="Закрыть диалог">×</button>
+    </div>
+
+    <form id="task-form" novalidate>
+      <div class="field">
+        <label for="f-title">Название</label>
+        <input type="text" id="f-title" name="title" placeholder="Например: сдать отчёт по практике"
+               autocomplete="off" required aria-describedby="f-title-error">
+        <p class="field-error" id="f-title-error" role="alert" hidden>Введите название задачи</p>
+      </div>
+
+      <div class="field">
+        <label for="f-desc">Описание</label>
+        <textarea id="f-desc" name="description" rows="3" placeholder="Детали, ссылки, что именно сделать"></textarea>
+      </div>
+
+      <div class="field">
+        <label for="f-due">Срок</label>
+        <input type="date" id="f-due" name="due">
+      </div>
+
+      <footer class="dlg-actions">
+        <button type="button" class="outline" data-close>Отмена</button>
+        <button type="submit">Создать задачу</button>
+      </footer>
+    </form>
+  </article>
+</dialog>
+
+<!-- Панель макета -->
+<aside class="mock" aria-label="Панель макета">
+  <span class="mock-label">МАКЕТ</span>
+  <div class="mock-btns">
+    <button type="button" data-view-btn="list" aria-pressed="true">Список</button>
+    <button type="button" data-view-btn="loading" aria-pressed="false">Загрузка</button>
+    <button type="button" data-view-btn="empty" aria-pressed="false">Пусто</button>
+    <button type="button" data-view-btn="error" aria-pressed="false">Ошибка</button>
+    <button type="button" data-view-btn="dialog" aria-pressed="false">Диалог</button>
+  </div>
+</aside>
+
+<script>
+(function () {
+  const main = document.querySelector('main');
+  const viewBtns = Array.from(document.querySelectorAll('.mock-btns [data-view-btn]'));
+  const dialog = document.getElementById('task-dialog');
+  const form = document.getElementById('task-form');
+  const titleInput = document.getElementById('f-title');
+  const titleError = document.getElementById('f-title-error');
+  const toast = document.getElementById('toast');
+  const retryBtn = document.getElementById('retry');
+
+  let retryTimer = null;
+
+  function syncPressed(name) {
+    viewBtns.forEach(function (btn) {
+      btn.setAttribute('aria-pressed', String(btn.dataset.viewBtn === name));
+    });
+  }
+
+  function showView(name) {
+    clearTimeout(retryTimer);
+    main.dataset.view = name;
+    syncPressed(name);
+    window.scrollTo({ top: 0, behavior: 'auto' });
+  }
+
+  function openDialog() {
+    if (main.dataset.view !== 'list') showView('list');
+    syncPressed('dialog');
+    if (!dialog.open) dialog.showModal();
+    requestAnimationFrame(function () { titleInput.focus(); });
+  }
+
+  function closeDialog() {
+    if (dialog.open) dialog.close();
+  }
+
+  /* Переключатель макета */
+  viewBtns.forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      if (btn.dataset.viewBtn === 'dialog') openDialog();
+      else showView(btn.dataset.viewBtn);
+    });
+  });
+
+  /* Открытие диалога из шапки и пустого состояния */
+  document.querySelectorAll('[data-open-new]').forEach(function (btn) {
+    btn.addEventListener('click', openDialog);
+  });
+
+  /* Закрытие диалога */
+  document.querySelectorAll('[data-close]').forEach(function (btn) {
+    btn.addEventListener('click', closeDialog);
+  });
+
+  dialog.addEventListener('click', function (event) {
+    if (event.target === dialog) closeDialog();
+  });
+
+  dialog.addEventListener('close', function () {
+    syncPressed(main.dataset.view);
+  });
+
+  dialog.addEventListener('cancel', function () {
+    window.setTimeout(function () { syncPressed(main.dataset.view); }, 0);
+  });
+
+  /* Валидация формы */
+  form.addEventListener('submit', function (event) {
+    event.preventDefault();
+
+    if (!titleInput.value.trim()) {
+      titleError.hidden = false;
+      titleInput.setAttribute('aria-invalid', 'true');
+      titleInput.focus();
+      return;
+    }
+
+    titleError.hidden = true;
+    titleInput.removeAttribute('aria-invalid');
+    closeDialog();
+    form.reset();
+    toast.hidden = false;
+    showView('list');
+  });
+
+  titleInput.addEventListener('input', function () {
+    if (titleInput.value.trim()) {
+      titleError.hidden = true;
+      titleInput.removeAttribute('aria-invalid');
+    }
+  });
+
+  /* Уведомление */
+  document.getElementById('toast-close').addEventListener('click', function () {
+    toast.hidden = true;
+  });
+
+  /* Повторить загрузку */
+  retryBtn.addEventListener('click', function () {
+    showView('loading');
+    retryTimer = window.setTimeout(function () {
+      if (main.dataset.view === 'loading') showView('list');
+    }, 1400);
+  });
+})();
+</script>
+</body>
+</html>

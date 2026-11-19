@@ -1,0 +1,627 @@
+{
+  "name": "Weekly Issues Stats (hw 7.2)",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 9 * * MON"
+            }
+          ]
+        }
+      },
+      "id": "f618003f-061a-4bf1-a94a-37f692105fc1",
+      "name": "Every Monday 09:00",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        0,
+        112
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const owner = 'SaZix-T';\nconst repo = 'ITMOv2';\nconst now = new Date();\nconst since = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);\nconst pad = function (n) { return (n < 10 ? '0' : '') + n; };\nconst iso = function (d) {\n  return d.getUTCFullYear() + '-' + pad(d.getUTCMonth() + 1) + '-' + pad(d.getUTCDate()) +\n    'T' + pad(d.getUTCHours()) + ':' + pad(d.getUTCMinutes()) + ':' + pad(d.getUTCSeconds()) + 'Z';\n};\nconst day = function (d) {\n  return d.getUTCFullYear() + '-' + pad(d.getUTCMonth() + 1) + '-' + pad(d.getUTCDate());\n};\nreturn [{ json: {\n  owner: owner,\n  repo: repo,\n  since: iso(since),\n  until: iso(now),\n  weekStart: day(since),\n  weekEnd: day(now),\n  weekLabel: day(since) + ' — ' + day(now),\n}}];"
+      },
+      "id": "75e2a4bb-913e-40af-9184-8d4ddfb52a53",
+      "name": "Compute Week Window",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        224,
+        112
+      ]
+    },
+    {
+      "parameters": {
+        "url": "={{ \"https://api.github.com/repos/\" + $(\"Compute Week Window\").first().json.owner + \"/\" + $(\"Compute Week Window\").first().json.repo + \"/issues\" }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "githubApi",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "state",
+              "value": "all"
+            },
+            {
+              "name": "since",
+              "value": "={{ $(\"Compute Week Window\").first().json.since }}"
+            },
+            {
+              "name": "sort",
+              "value": "created"
+            },
+            {
+              "name": "direction",
+              "value": "desc"
+            },
+            {
+              "name": "per_page",
+              "value": "100"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Accept",
+              "value": "application/vnd.github+json"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "5ac0efea-769c-44f9-8c08-8ab6b8a8beba",
+      "name": "GH: Issues Created",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        448,
+        112
+      ],
+      "executeOnce": true,
+      "credentials": {
+        "githubApi": {
+          "id": "YcrkrWJhRuhrpJe1",
+          "name": "GitHub account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "={{ \"https://api.github.com/repos/\" + $(\"Compute Week Window\").first().json.owner + \"/\" + $(\"Compute Week Window\").first().json.repo + \"/issues\" }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "githubApi",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "state",
+              "value": "closed"
+            },
+            {
+              "name": "since",
+              "value": "={{ $(\"Compute Week Window\").first().json.since }}"
+            },
+            {
+              "name": "sort",
+              "value": "updated"
+            },
+            {
+              "name": "direction",
+              "value": "desc"
+            },
+            {
+              "name": "per_page",
+              "value": "100"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Accept",
+              "value": "application/vnd.github+json"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "e39fbd32-69ef-4f14-a5df-6b15fd824430",
+      "name": "GH: Issues Closed",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        672,
+        112
+      ],
+      "executeOnce": true,
+      "credentials": {
+        "githubApi": {
+          "id": "YcrkrWJhRuhrpJe1",
+          "name": "GitHub account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "={{ \"https://api.github.com/repos/\" + $(\"Compute Week Window\").first().json.owner + \"/\" + $(\"Compute Week Window\").first().json.repo + \"/issues/comments\" }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "githubApi",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "since",
+              "value": "={{ $(\"Compute Week Window\").first().json.since }}"
+            },
+            {
+              "name": "per_page",
+              "value": "100"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Accept",
+              "value": "application/vnd.github+json"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "f77c20f3-b75e-45ad-a13a-be0fa310cdf1",
+      "name": "GH: Issue Comments",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        896,
+        112
+      ],
+      "executeOnce": true,
+      "credentials": {
+        "githubApi": {
+          "id": "YcrkrWJhRuhrpJe1",
+          "name": "GitHub account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "={{ \"https://api.github.com/repos/\" + $(\"Compute Week Window\").first().json.owner + \"/\" + $(\"Compute Week Window\").first().json.repo + \"/pulls\" }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "githubApi",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "state",
+              "value": "all"
+            },
+            {
+              "name": "sort",
+              "value": "updated"
+            },
+            {
+              "name": "direction",
+              "value": "desc"
+            },
+            {
+              "name": "per_page",
+              "value": "100"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Accept",
+              "value": "application/vnd.github+json"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "d6104527-efc3-4ceb-b9e5-64cc544bcb52",
+      "name": "GH: Pull Requests",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        1120,
+        112
+      ],
+      "executeOnce": true,
+      "credentials": {
+        "githubApi": {
+          "id": "YcrkrWJhRuhrpJe1",
+          "name": "GitHub account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const week = $('Compute Week Window').first().json;\nconst since = new Date(week.since).getTime();\nconst until = new Date(week.until).getTime();\nconst pad = function (n) { return (n < 10 ? '0' : '') + n; };\nconst day = function (d) {\n  return d.getUTCFullYear() + '-' + pad(d.getUTCMonth() + 1) + '-' + pad(d.getUTCDate());\n};\n\nconst openedRes = $('GH: Issues Created').all();\nconst closedRes = $('GH: Issues Closed').all();\nconst commentsRes = $('GH: Issue Comments').all();\nconst pullsRes = $('GH: Pull Requests').all();\n\nconst list = function (items) {\n  if (!items.length) return [];\n  const first = items[0].json;\n  if (Array.isArray(first)) return first;\n  if (first && Array.isArray(first.data)) return first.data;\n  if (first && first.items && Array.isArray(first.items.data)) return first.items.data;\n  return items.map(function (i) { return i.json; });\n};\n\nconst issuesOpened = list(openedRes).filter(function (i) {\n  if (!i || i.pull_request || !i.created_at) return false;\n  const t = new Date(i.created_at).getTime();\n  return t >= since && t <= until;\n});\n\nconst issuesClosed = list(closedRes).filter(function (i) {\n  if (!i || i.pull_request || !i.closed_at) return false;\n  const t = new Date(i.closed_at).getTime();\n  return t >= since && t <= until;\n});\n\nconst comments = list(commentsRes).filter(function (c) {\n  if (!c || !c.created_at) return false;\n  const t = new Date(c.created_at).getTime();\n  return t >= since && t <= until;\n});\n\nconst pulls = list(pullsRes).filter(function (p) {\n  if (!p || !p.updated_at) return false;\n  const t = new Date(p.updated_at).getTime();\n  return t >= since && t <= until;\n});\n\nconst typeOf = function (issue) {\n  const labels = (issue.labels || []).map(function (l) { return (typeof l === 'string') ? l : l.name; });\n  const known = ['bug', 'task', 'feature'];\n  for (const k of known) {\n    if (labels.includes(k)) return k;\n  }\n  if (labels.includes('needs-triage')) return 'needs-triage';\n  return 'без метки';\n};\n\nconst byType = {};\nconst byAuthor = {};\nconst bump = function (obj, key, opened, closed, commentsCount) {\n  if (!obj[key]) obj[key] = { name: key, opened: 0, closed: 0, comments: 0, total: 0 };\n  obj[key].opened += opened;\n  obj[key].closed += closed;\n  obj[key].comments += commentsCount;\n  obj[key].total += opened + closed;\n};\n\nfor (const i of issuesOpened) bump(byType, typeOf(i), 1, 0, 0);\nfor (const i of issuesClosed) bump(byType, typeOf(i), 0, 1, 0);\nfor (const i of issuesOpened) bump(byAuthor, (i.user && i.user.login) || 'unknown', 1, 0, 0);\nfor (const i of issuesClosed) bump(byAuthor, (i.user && i.user.login) || 'unknown', 0, 1, 0);\n\nconst commentAuthors = {};\nfor (const c of comments) {\n  const login = (c.user && c.user.login) || 'unknown';\n  commentAuthors[login] = (commentAuthors[login] || 0) + 1;\n}\nfor (const login of Object.keys(commentAuthors)) {\n  if (!byAuthor[login]) byAuthor[login] = { name: login, opened: 0, closed: 0, comments: 0, total: 0 };\n  byAuthor[login].comments += commentAuthors[login];\n}\n\nconst sortRows = function (obj) {\n  return Object.keys(obj).map(function (k) { return obj[k]; })\n    .sort(function (a, b) { return b.total - a.total || b.comments - a.comments; });\n};\n\nconst opened = issuesOpened.length;\nconst closed = issuesClosed.length;\nconst commentsCount = comments.length;\nconst pullsCount = pulls.length;\n\nreturn [{ json: {\n  weekStart: week.weekStart,\n  weekEnd: week.weekEnd,\n  weekLabel: week.weekLabel,\n  opened: opened,\n  closed: closed,\n  comments: commentsCount,\n  pulls: pullsCount,\n  byType: sortRows(byType),\n  byAuthor: sortRows(byAuthor),\n  byTypeJson: JSON.stringify(sortRows(byType)),\n  byAuthorJson: JSON.stringify(sortRows(byAuthor)),\n}}];"
+      },
+      "id": "28cd1cc8-08c4-4af2-8519-9d1f9c3e45e0",
+      "name": "Aggregate Stats",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1344,
+        112
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "lvVPdmuUSGHwZBf1",
+          "cachedResultName": "weekly_stats"
+        },
+        "filters": {
+          "conditions": []
+        },
+        "returnAll": true
+      },
+      "id": "59500b28-8c95-4b57-862f-4b10b2e3788d",
+      "name": "Previous Weeks",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        1568,
+        112
+      ],
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "jsCode": "const stats = $('Aggregate Stats').first().json;\nconst rows = $input.all().map(function (i) { return i.json; }).filter(function (r) { return r && r.week_start; });\n\nlet prev = null;\nfor (const r of rows) {\n  if (r.week_start === stats.weekStart) continue;\n  if (r.week_start > stats.weekStart) continue;\n  if (!prev || r.week_start > prev.week_start) prev = r;\n}\n\nconst num = function (v) { return Number(v || 0); };\nconst delta = function (cur, before) {\n  if (before === null || before === undefined) return null;\n  return num(cur) - num(before);\n};\nconst fmtDelta = function (d) {\n  if (d === null) return '—';\n  if (d > 0) return '+' + d;\n  return String(d);\n};\nconst tone = function (d) {\n  if (d === null) return '#6b7280';\n  if (d > 0) return '#dc2626';\n  if (d < 0) return '#16a34a';\n  return '#6b7280';\n};\n\nconst dOpened = prev ? delta(stats.opened, prev.opened) : null;\nconst dClosed = prev ? delta(stats.closed, prev.closed) : null;\nconst prevComments = prev ? (prev.comment_count !== undefined ? prev.comment_count : prev.comments) : null;\nconst dComments = prev ? delta(stats.comments, prevComments) : null;\nconst dPulls = prev ? delta(stats.pulls, prev.pulls) : null;\n\nconst mk = function (v, d) {\n  return '<td>' + v + '</td><td style=\"color:' + tone(d) + ';white-space:nowrap\">' + fmtDelta(d) + '</td>';\n};\n\nlet typeRows = '';\nfor (const t of stats.byType) {\n  const before = prev && Array.isArray(prev.byType) ? prev.byType : [];\n  const old = before.filter(function (x) { return x.name === t.name; })[0];\n  const dt = old ? (t.total - old.total) : null;\n  typeRows += '<tr><td>' + t.name + '</td><td>' + t.opened + '</td><td>' + t.closed + '</td><td>' + t.comments + '</td>' + mk(t.total, dt) + '</tr>';\n}\nif (!typeRows) typeRows = '<tr><td colspan=\"5\">за неделю нет активности</td></tr>';\n\nlet authorRows = '';\nfor (const a of stats.byAuthor) {\n  const before = prev && Array.isArray(prev.byAuthor) ? prev.byAuthor : [];\n  const old = before.filter(function (x) { return x.name === a.name; })[0];\n  const dt = old ? (a.total - old.total) : null;\n  authorRows += '<tr><td>' + a.name + '</td><td>' + a.opened + '</td><td>' + a.closed + '</td><td>' + a.comments + '</td>' + mk(a.total, dt) + '</tr>';\n}\nif (!authorRows) authorRows = '<tr><td colspan=\"5\">за неделю нет активности</td></tr>';\n\nconst th = 'style=\"text-align:left;padding:6px 10px;border-bottom:2px solid #d1d5db;font-size:13px\"';\nconst td = 'style=\"padding:6px 10px;border-bottom:1px solid #e5e7eb;font-size:13px\"';\n\nconst htmlBody = [\n  '<div style=\"font-family:-apple-system,Segoe UI,Roboto,Arial,sans-serif;color:#111827\">',\n  '<h2 style=\"margin:0 0 4px\">Еженедельная статистика Issues</h2>',\n  '<p style=\"margin:0 0 16px;color:#6b7280\">Неделя: ' + stats.weekLabel + ' · репозиторий SaZix-T/ITMOv2</p>',\n  '<table style=\"border-collapse:collapse;margin-bottom:8px\">',\n  '<tr><th ' + th + '>Показатель</th><th ' + th + '>За неделю</th><th ' + th + '>Δ к прошлой</th></tr>',\n  '<tr><td ' + td + '>Открыто Issues</td>' + mk(stats.opened, dOpened) + '</tr>',\n  '<tr><td ' + td + '>Закрыто Issues</td>' + mk(stats.closed, dClosed) + '</tr>',\n  '<tr><td ' + td + '>Комментариев</td>' + mk(stats.comments, dComments) + '</tr>',\n  '<tr><td ' + td + '>Активных PR</td>' + mk(stats.pulls, dPulls) + '</tr>',\n  '</table>',\n  '<p style=\"margin:0 0 6px;color:#6b7280;font-size:12px\">',\n  prev ? ('Сравнение с неделей ' + prev.week_start) : 'Прошлой недели в Data Table нет — Δ не рассчитан',\n  '</p>',\n  '<h3 style=\"margin:18px 0 6px\">По типам</h3>',\n  '<table style=\"border-collapse:collapse;width:100%\">',\n  '<tr><th ' + th + '>Тип</th><th ' + th + '>Открыто</th><th ' + th + '>Закрыто</th><th ' + th + '>Комментарии</th><th ' + th + '>Δ</th></tr>',\n  typeRows,\n  '</table>',\n  '<h3 style=\"margin:18px 0 6px\">По авторам</h3>',\n  '<table style=\"border-collapse:collapse;width:100%\">',\n  '<tr><th ' + th + '>Автор</th><th ' + th + '>Открыто</th><th ' + th + '>Закрыто</th><th ' + th + '>Комментарии</th><th ' + th + '>Δ</th></tr>',\n  authorRows,\n  '</table>',\n  '<!--ANNOTATION-->',\n  '</div>',\n].join('');\n\nconst prompt = [\n  'Ты аналитик учебного проекта. Ниже статистика GitHub Issues за неделю и изменение к прошлой неделе.',\n  '',\n  'Неделя: ' + stats.weekLabel,\n  'Открыто Issues: ' + stats.opened + ' (Δ ' + fmtDelta(dOpened) + ')',\n  'Закрыто Issues: ' + stats.closed + ' (Δ ' + fmtDelta(dClosed) + ')',\n  'Комментариев: ' + stats.comments + ' (Δ ' + fmtDelta(dComments) + ')',\n  'Активных PR: ' + stats.pulls + ' (Δ ' + fmtDelta(dPulls) + ')',\n  '',\n  'По типам: ' + (stats.byType.map(function (t) { return t.name + ': открыто ' + t.opened + ', закрыто ' + t.closed; }).join('; ') || 'нет данных'),\n  'По авторам: ' + (stats.byAuthor.map(function (a) { return a.name + ': ' + a.total + ' событий'; }).join('; ') || 'нет данных'),\n  '',\n  'Напиши по-русски 3-4 предложения: что изменилось к прошлой неделе, на что обратить внимание команде.',\n  'Без заголовков и markdown-разметки, обычный текст.',\n].join(String.fromCharCode(10));\n\nreturn [{ json: {\n  weekStart: stats.weekStart,\n  weekEnd: stats.weekEnd,\n  weekLabel: stats.weekLabel,\n  opened: stats.opened,\n  closed: stats.closed,\n  comments: stats.comments,\n  pulls: stats.pulls,\n  byTypeJson: stats.byTypeJson,\n  byAuthorJson: stats.byAuthorJson,\n  htmlBody: htmlBody,\n  prompt: prompt,\n  prevWeek: prev ? prev.week_start : '',\n  deltaOpened: dOpened === null ? '' : dOpened,\n  deltaClosed: dClosed === null ? '' : dClosed,\n  deltaComments: dComments === null ? '' : dComments,\n  deltaPulls: dPulls === null ? '' : dPulls,\n}}];"
+      },
+      "id": "e4f4df57-1d6d-4849-a1c8-afbdaf6ea641",
+      "name": "Build Report",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1792,
+        112
+      ]
+    },
+    {
+      "parameters": {
+        "dataTableId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "lvVPdmuUSGHwZBf1",
+          "cachedResultName": "weekly_stats"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "week_start": "={{ $(\"Build Report\").first().json.weekStart }}",
+            "week_end": "={{ $(\"Build Report\").first().json.weekEnd }}",
+            "opened": "={{ $(\"Build Report\").first().json.opened }}",
+            "closed": "={{ $(\"Build Report\").first().json.closed }}",
+            "comment_count": "={{ $(\"Build Report\").first().json.comments }}",
+            "pulls": "={{ $(\"Build Report\").first().json.pulls }}",
+            "by_type_json": "={{ $(\"Build Report\").first().json.byTypeJson }}",
+            "by_author_json": "={{ $(\"Build Report\").first().json.byAuthorJson }}",
+            "created_at": "={{ new Date().toISOString() }}"
+          },
+          "schema": [
+            {
+              "id": "week_start",
+              "displayName": "week_start",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "week_end",
+              "displayName": "week_end",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "opened",
+              "displayName": "opened",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "closed",
+              "displayName": "closed",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "comment_count",
+              "displayName": "comment_count",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "pulls",
+              "displayName": "pulls",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "by_type_json",
+              "displayName": "by_type_json",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "by_author_json",
+              "displayName": "by_author_json",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "created_at",
+              "displayName": "created_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "cd39ef80-feb9-44c2-8f48-a0a81a55ca35",
+      "name": "Save Week Stats",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        2016,
+        112
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $(\"Build Report\").first().json.prompt }}",
+        "batching": {}
+      },
+      "id": "6117bc4d-3009-4b0c-8b32-5380485b1d86",
+      "name": "Weekly Annotation (AI)",
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        2240,
+        112
+      ]
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "deepseek/deepseek-v4.1-flash-1017",
+          "cachedResultName": "deepseek/deepseek-v4.1-flash-1017"
+        },
+        "responsesApiEnabled": false,
+        "options": {}
+      },
+      "id": "9df2ba1a-4231-43d4-a3a1-d1244c7873c6",
+      "name": "DeepSeek Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        2320,
+        336
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "t7wQLdv3xwzSq5yp",
+          "name": "VseLLM OpenAI"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "fromEmail": "sashaa21092007@gmail.com",
+        "toEmail": "sashaa21092007@gmail.com",
+        "subject": "={{ \"Issues неделя \" + $(\"Build Report\").first().json.weekLabel }}",
+        "html": "={{ $(\"Build Report\").first().json.htmlBody.replace(\"<!--ANNOTATION-->\", \"<h3 style=\\\"margin:18px 0 6px\\\">AI-комментарий недели</h3><p style=\\\"margin:0;padding:10px 12px;background:#f5f3ff;border-left:3px solid #7c3aed;font-size:13px\\\">\" + $json.text + \"</p>\") }}",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "id": "237fb612-ae9e-4f52-b9d9-a341662f3621",
+      "name": "Send Report (Gmail SMTP)",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        2592,
+        112
+      ],
+      "webhookId": "ad9fb553-c249-4229-a86e-027abd1fd387"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Every Monday 09:00": {
+      "main": [
+        [
+          {
+            "node": "Compute Week Window",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Compute Week Window": {
+      "main": [
+        [
+          {
+            "node": "GH: Issues Created",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GH: Issues Created": {
+      "main": [
+        [
+          {
+            "node": "GH: Issues Closed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GH: Issues Closed": {
+      "main": [
+        [
+          {
+            "node": "GH: Issue Comments",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GH: Issue Comments": {
+      "main": [
+        [
+          {
+            "node": "GH: Pull Requests",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GH: Pull Requests": {
+      "main": [
+        [
+          {
+            "node": "Aggregate Stats",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate Stats": {
+      "main": [
+        [
+          {
+            "node": "Previous Weeks",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Previous Weeks": {
+      "main": [
+        [
+          {
+            "node": "Build Report",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Report": {
+      "main": [
+        [
+          {
+            "node": "Save Week Stats",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save Week Stats": {
+      "main": [
+        [
+          {
+            "node": "Weekly Annotation (AI)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Weekly Annotation (AI)": {
+      "main": [
+        [
+          {
+            "node": "Send Report (Gmail SMTP)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "DeepSeek Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Weekly Annotation (AI)",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": true
+  },
+  "versionId": "092c223b-ca9e-47d2-9ae1-165ae96a6829",
+  "meta": {
+    "aiBuilderAssisted": true,
+    "builderVariant": "mcp",
+    "instanceId": "0cd8a174f462363e2854d003e0a806e78974acf8794d42e74f686084b36f2ff4"
+  },
+  "nodeGroups": [],
+  "id": "s9K3lFCtCGpIvdfN",
+  "tags": []
+}
