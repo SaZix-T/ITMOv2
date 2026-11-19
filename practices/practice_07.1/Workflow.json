@@ -1,0 +1,745 @@
+{
+  "name": "My workflow 7",
+  "nodes": [
+    {
+      "parameters": {
+        "owner": {
+          "__rl": true,
+          "mode": "list",
+          "value": "SaZix-T",
+          "cachedResultName": "SaZix-T",
+          "cachedResultUrl": "https://github.com/SaZix-T"
+        },
+        "repository": {
+          "__rl": true,
+          "mode": "list",
+          "value": "ITMOv2",
+          "cachedResultName": "ITMOv2",
+          "cachedResultUrl": "https://github.com/SaZix-T/ITMOv2"
+        },
+        "events": [
+          "pull_request"
+        ],
+        "options": {}
+      },
+      "id": "3f791740-e989-4d88-8f84-42b844c02612",
+      "name": "PR Trigger",
+      "type": "n8n-nodes-base.githubTrigger",
+      "typeVersion": 1,
+      "position": [
+        432,
+        352
+      ],
+      "webhookId": "fa51d8b4-3b3c-4ab0-8cd3-c1011d72659e",
+      "credentials": {
+        "githubApi": {
+          "id": "SYdSsMOmCCQycHl2",
+          "name": "GitHub account 65"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const out = [];\nfor (const item of $input.all()) {\n  const ev = item.json.body || item.json;\n  if (ev.action !== 'opened') continue;\n  const pr = ev.pull_request || {};\n  const repo = ev.repository || {};\n  const full = repo.full_name || '';\n  out.push({ json: {\n    owner: repo.owner ? repo.owner.login : '',\n    repo: repo.name || '',\n    repoFullName: full,\n    prNumber: ev.number,\n    prTitle: pr.title || '',\n    command: 'pull_request.opened',\n    mode: 'primary',\n    reviewKind: 'primary',\n    model: 'deepseek/deepseek-v4.1-flash-1017',\n    source: 'pull_request',\n    prKey: full + '#' + ev.number,\n  }});\n}\nreturn out;"
+      },
+      "id": "e6f2ab79-b1f9-4367-ba37-82b654adc593",
+      "name": "Prepare PR (opened only)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        656,
+        352
+      ]
+    },
+    {
+      "parameters": {
+        "url": "={{ \"https://api.github.com/repos/\" + $json.owner + \"/\" + $json.repo + \"/pulls/\" + $json.prNumber }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "githubApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Accept",
+              "value": "application/vnd.github.v3.diff"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "text"
+            }
+          }
+        }
+      },
+      "id": "dc9d7af3-529e-49af-9b14-bccde9931234",
+      "name": "Get PR Diff",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        880,
+        256
+      ],
+      "credentials": {
+        "githubApi": {
+          "id": "SYdSsMOmCCQycHl2",
+          "name": "GitHub account 65"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "owner": {
+          "__rl": true,
+          "mode": "list",
+          "value": "SaZix-T",
+          "cachedResultName": "SaZix-T",
+          "cachedResultUrl": "https://github.com/SaZix-T"
+        },
+        "repository": {
+          "__rl": true,
+          "mode": "list",
+          "value": "ITMOv2",
+          "cachedResultName": "ITMOv2",
+          "cachedResultUrl": "https://github.com/SaZix-T/ITMOv2"
+        },
+        "events": [
+          "issue_comment"
+        ],
+        "options": {}
+      },
+      "id": "225028fa-9703-480f-9721-4edc99a9496a",
+      "name": "PR Comment Trigger",
+      "type": "n8n-nodes-base.githubTrigger",
+      "typeVersion": 1,
+      "position": [
+        208,
+        64
+      ],
+      "webhookId": "02b518fb-7eda-4a0f-b941-7f3877897d00",
+      "credentials": {
+        "githubApi": {
+          "id": "SYdSsMOmCCQycHl2",
+          "name": "GitHub account 65"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const out = [];\nfor (const item of $input.all()) {\n  const ev = item.json.body || item.json;\n  if (ev.action && ev.action !== 'created') continue;\n  if (!ev.issue || !ev.issue.pull_request) continue;\n  const text = String((ev.comment && ev.comment.body) || '').trim();\n  let command = '';\n  let mode = '';\n  let model = '';\n  if (text.indexOf('/make_other_ai_review') === 0) {\n    command = '/make_other_ai_review';\n    mode = 'secondary';\n    model = 'openai/gpt-5.1';\n  } else if (text.indexOf('/make_ai_review') === 0) {\n    command = '/make_ai_review';\n    mode = 'primary';\n    model = 'deepseek/deepseek-v4.1-flash-1017';\n  } else {\n    continue;\n  }\n  const repo = ev.repository || {};\n  const full = repo.full_name || '';\n  out.push({ json: {\n    owner: repo.owner ? repo.owner.login : '',\n    repo: repo.name || '',\n    repoFullName: full,\n    prNumber: ev.issue.number,\n    prTitle: ev.issue.title || '',\n    command: command,\n    mode: mode,\n    reviewKind: mode === 'secondary' ? 'secondary' : 'primary',\n    model: model,\n    source: 'command',\n    prKey: full + '#' + ev.issue.number,\n  }});\n}\nreturn out;"
+      },
+      "id": "248e3171-aa1b-4090-92dd-3878ed22a62f",
+      "name": "Prepare Command",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        432,
+        64
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "rowExists",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "fmHxe23bp45CoyWV",
+          "cachedResultName": "pr_reviews"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "pr_key",
+              "keyValue": "={{ $json.prKey }}"
+            },
+            {
+              "keyName": "review_kind",
+              "keyValue": "={{ $json.reviewKind }}"
+            }
+          ]
+        }
+      },
+      "id": "6ca9e299-c7b7-4323-9755-920e74667068",
+      "name": "PR Already In Table",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        656,
+        -32
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "createComment",
+        "owner": {
+          "__rl": true,
+          "mode": "list",
+          "value": "={{ $(\"Prepare Command\").first().json.owner }}"
+        },
+        "repository": {
+          "__rl": true,
+          "mode": "list",
+          "value": "={{ $(\"Prepare Command\").first().json.repo }}"
+        },
+        "issueNumber": "={{ $(\"Prepare Command\").first().json.prNumber }}",
+        "body": "={{ \"PR \" + $(\"Prepare Command\").first().json.prKey + \" уже есть в Data Table pr_reviews. Повторное ревью по команде /make_ai_review не запускается. Для проверки другой моделью используйте /make_other_ai_review.\" }}"
+      },
+      "id": "4bde3dd6-b094-4098-9ed8-195f29bc3faa",
+      "name": "Reply: Already Reviewed",
+      "type": "n8n-nodes-base.github",
+      "typeVersion": 1.1,
+      "position": [
+        880,
+        -32
+      ],
+      "webhookId": "efc42f16-c624-4fec-924d-d3692527aa56",
+      "credentials": {
+        "githubApi": {
+          "id": "SYdSsMOmCCQycHl2",
+          "name": "GitHub account 65"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "rowNotExists",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "fmHxe23bp45CoyWV",
+          "cachedResultName": "pr_reviews"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "pr_key",
+              "keyValue": "={{ $json.prKey }}"
+            },
+            {
+              "keyName": "review_kind",
+              "keyValue": "={{ $json.reviewKind }}"
+            }
+          ]
+        }
+      },
+      "id": "d996bca8-09a2-4060-b60a-c631d8c9bc4a",
+      "name": "PR Not Reviewed Yet",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        656,
+        160
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const out = [];\nconst MAX_HUNKS = 25;\nconst MAX_HUNK_CHARS = 6000;\n\nfor (const item of $input.all()) {\n  let ctx = null;\n  try {\n    const a = $('Prepare PR (opened only)').first().json;\n    if (a && a.prNumber) ctx = a;\n  } catch (e) {}\n  if (!ctx) {\n    try {\n      const b = $('Prepare Command').first().json;\n      if (b && b.prNumber) ctx = b;\n    } catch (e) {}\n  }\n  if (!ctx) continue;\n\n  const j = item.json || {};\n  const diff = typeof j.data === 'string' ? j.data : (typeof j.body === 'string' ? j.body : '');\n  if (!diff) continue;\n\n  const lines = diff.split('\\n');\n  const hunks = [];\n  let path = null;\n  let current = null;\n  const flush = function () {\n    if (path && current) hunks.push(current);\n    current = null;\n  };\n\n  for (let i = 0; i < lines.length; i++) {\n    const raw = lines[i];\n    if (raw.indexOf('diff --git ') === 0) { flush(); path = null; continue; }\n    if (!current && raw.indexOf('+++ ') === 0) {\n      const p = raw.slice(4).trim();\n      path = p === '/dev/null' ? null : p.replace(/^b\\//, '');\n      continue;\n    }\n    if (!current && raw.indexOf('--- ') === 0) continue;\n    const hm = /^@@ -[0-9]+(?:,[0-9]+)? \\+([0-9]+)(?:,[0-9]+)? @@/.exec(raw);\n    if (hm) {\n      flush();\n      current = { path: path, start: parseInt(hm[1], 10), header: raw, body: [] };\n      continue;\n    }\n    if (!current) continue;\n    if (raw.indexOf('Binary files') === 0) { current = null; continue; }\n    if (raw.indexOf('\\\\') === 0) continue;\n    current.body.push(raw);\n  }\n  flush();\n\n  for (const h of hunks) {\n    if (out.length >= MAX_HUNKS) break;\n    let cursor = h.start;\n    let anchor = null;\n    let fallback = null;\n    for (const ln of h.body) {\n      const tag = ln.charAt(0);\n      if (tag === '+') {\n        if (anchor === null) anchor = cursor;\n        cursor++;\n      } else if (tag === ' ') {\n        if (fallback === null) fallback = cursor;\n        cursor++;\n      } else if (tag === '-') {\n        continue;\n      } else {\n        cursor++;\n      }\n    }\n    if (anchor === null) anchor = fallback;\n    if (anchor === null) continue;\n\n    let text = h.header + '\\n' + h.body.join('\\n');\n    if (text.length > MAX_HUNK_CHARS) text = text.slice(0, MAX_HUNK_CHARS) + '\\n... (блок обрезан)';\n\n    const hunkId = out.length + 1;\n    const prompt = [\n      'Ты senior-разработчик и делаешь code review одного блока изменённого кода из pull request.',\n      '',\n      'Файл: ' + h.path,\n      'Заголовок блока: ' + h.header,\n      'Block ID: ' + hunkId,\n      ctx.prTitle ? ('PR: ' + ctx.prTitle) : '',\n      '',\n      'Изменённый код (unified diff, один блок):',\n      '~~~diff',\n      text,\n      '~~~',\n      '',\n      'Найди: баги, проблемы безопасности, регрессии, проблемы производительности, нарушения best practices.',\n      'Пиши по-русски, конкретно, не более 600 символов, можно markdown.',\n      'Если замечаний нет — напиши: Замечаний нет.',\n      '',\n      'Ответ верни СТРОГО как JSON без markdown-обёртки:',\n      '{\"hunk\": ' + hunkId + ', \"comment\": \"<текст ревью>\"}',\n    ].join('\\n');\n\n    out.push({ json: {\n      owner: ctx.owner,\n      repo: ctx.repo,\n      prNumber: ctx.prNumber,\n      prKey: ctx.prKey,\n      command: ctx.command,\n      mode: ctx.mode,\n      reviewKind: ctx.reviewKind,\n      model: ctx.model,\n      source: ctx.source,\n      path: h.path,\n      line: anchor,\n      side: 'RIGHT',\n      hunkId: hunkId,\n      hunkHeader: h.header,\n      prompt: prompt,\n    }});\n  }\n}\nreturn out;"
+      },
+      "id": "7842993e-c875-4d37-a919-8265754a426f",
+      "name": "Split Diff Into Hunks",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1104,
+        256
+      ]
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.mode }}",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "rightValue": "secondary",
+                    "id": "7a7e141e-8573-43e3-bdc9-c18858c6d1b3"
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.mode }}",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "rightValue": "primary",
+                    "id": "9b34ca58-462e-4b2c-b920-eca4216378e3"
+                  }
+                ],
+                "combinator": "and"
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "78129133-926f-4909-9604-c99d79ac29d0",
+      "name": "Route By Model",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        1328,
+        256
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.prompt }}",
+        "batching": {
+          "batchSize": 3
+        }
+      },
+      "id": "e1265e7f-45fe-4fc1-b6ed-382c9ad3dfe7",
+      "name": "Review Block (GPT)",
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        1552,
+        -48
+      ]
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "openai/gpt-5.1",
+          "cachedResultName": "openai/gpt-5.1"
+        },
+        "responsesApiEnabled": false,
+        "options": {}
+      },
+      "id": "956d4471-a26e-4c69-88d9-43864c96ceb6",
+      "name": "GPT Model (secondary)",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        1632,
+        176
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "eV8sSPiFrjWLlW7o",
+          "name": "OpenAI account 54"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.prompt }}",
+        "batching": {
+          "batchSize": 3
+        }
+      },
+      "id": "68675502-d0d4-48ed-ab69-494a0b1a51e7",
+      "name": "Review Block (DeepSeek)",
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        1552,
+        464
+      ]
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "deepseek/deepseek-v4.1-flash-1017",
+          "cachedResultName": "deepseek/deepseek-v4.1-flash-1017"
+        },
+        "responsesApiEnabled": false,
+        "options": {}
+      },
+      "id": "2c658f33-c5b5-45dc-8bb6-06b10687f11f",
+      "name": "DeepSeek Model (primary)",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        1632,
+        688
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "eV8sSPiFrjWLlW7o",
+          "name": "OpenAI account 54"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const hunks = $('Split Diff Into Hunks').all().map(function (i) { return i.json; });\nif (!hunks.length) return [];\n\nconst byId = {};\nfor (const h of hunks) byId[String(h.hunkId)] = h;\n\nconst parsed = [];\nfor (const item of $input.all()) {\n  const raw = String(item.json.text || item.json.output || '').trim();\n  let hunkId = null;\n  let comment = '';\n  const start = raw.indexOf('{');\n  const end = raw.lastIndexOf('}');\n  if (start !== -1 && end > start) {\n    try {\n      const obj = JSON.parse(raw.slice(start, end + 1));\n      if (obj && obj.hunk !== undefined && obj.hunk !== null) hunkId = String(obj.hunk).replace(/[^0-9]/g, '');\n      if (obj && typeof obj.comment === 'string') comment = obj.comment;\n    } catch (e) {}\n  }\n  if (!comment) {\n    const fence = String.fromCharCode(96, 96, 96);\n    comment = raw.split(fence).join('').replace(/^[a-zA-Z]*\\n/, '').trim();\n  }\n  if (!hunkId) {\n    const mm = raw.match(/Block ID:[ ]*([0-9]+)/);\n    if (mm) hunkId = mm[1];\n  }\n  parsed.push({ hunkId: hunkId, comment: comment });\n}\n\nconst used = {};\nconst picked = [];\nconst leftovers = [];\nconst make = function (h, text) {\n  const body = String(text || '').trim();\n  return { path: h.path, line: h.line, side: 'RIGHT', body: body ? body.slice(0, 4000) : 'Замечаний нет' };\n};\n\nfor (const p of parsed) {\n  const h = p.hunkId ? byId[p.hunkId] : null;\n  if (h && !used[p.hunkId]) {\n    used[p.hunkId] = true;\n    picked.push(make(h, p.comment));\n  } else {\n    leftovers.push(p);\n  }\n}\n\nlet li = 0;\nfor (const h of hunks) {\n  const key = String(h.hunkId);\n  if (used[key]) continue;\n  if (li >= leftovers.length) break;\n  used[key] = true;\n  picked.push(make(h, leftovers[li].comment));\n  li++;\n}\n\nconst files = {};\nfor (const c of picked) files[c.path] = true;\nconst fileCount = Object.keys(files).length;\nconst first = hunks[0];\nconst model = first.model || '';\n\nreturn [{ json: {\n  owner: first.owner,\n  repo: first.repo,\n  prNumber: first.prNumber,\n  prKey: first.prKey,\n  command: first.command,\n  model: model,\n  mode: first.mode,\n  reviewKind: first.reviewKind,\n  comments: picked,\n  commentsCount: picked.length,\n  reviewedAt: new Date().toISOString(),\n  reviewBody: [\n    '## AI code review',\n    '',\n    '- Модель: ' + model,\n    '- Команда: ' + first.command,\n    '- Блоков изменённого кода: ' + picked.length,\n    '- Файлов: ' + fileCount,\n    '',\n    'Замечания опубликованы точечно — отдельным комментарием к каждому блоку diff.',\n  ].join(String.fromCharCode(10))\n}}];"
+      },
+      "id": "af86caad-8474-4347-81b7-67a998f896f3",
+      "name": "Build Review Payload",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1904,
+        256
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ \"https://api.github.com/repos/\" + $json.owner + \"/\" + $json.repo + \"/pulls/\" + $json.prNumber + \"/reviews\" }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "githubApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Accept",
+              "value": "application/vnd.github+json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ body: $json.reviewBody, event: \"COMMENT\", comments: $json.comments }) }}",
+        "options": {}
+      },
+      "id": "0a4bf514-2821-4064-a4a8-ce55d56af5a1",
+      "name": "Post Review (inline comments)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        2128,
+        256
+      ],
+      "credentials": {
+        "githubApi": {
+          "id": "SYdSsMOmCCQycHl2",
+          "name": "GitHub account 65"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "dataTableId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "fmHxe23bp45CoyWV",
+          "cachedResultName": "pr_reviews"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "pr_key": "={{ $(\"Build Review Payload\").first().json.prKey }}",
+            "pr_number": "={{ $(\"Build Review Payload\").first().json.prNumber }}",
+            "repo": "={{ $(\"Build Review Payload\").first().json.owner + \"/\" + $(\"Build Review Payload\").first().json.repo }}",
+            "command": "={{ $(\"Build Review Payload\").first().json.command }}",
+            "model": "={{ $(\"Build Review Payload\").first().json.model }}",
+            "comments_count": "={{ $(\"Build Review Payload\").first().json.commentsCount }}",
+            "reviewed_at": "={{ $(\"Build Review Payload\").first().json.reviewedAt }}",
+            "review_kind": "={{ $(\"Build Review Payload\").first().json.reviewKind }}"
+          },
+          "schema": [
+            {
+              "id": "pr_key",
+              "displayName": "pr_key",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "pr_number",
+              "displayName": "pr_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "repo",
+              "displayName": "repo",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "command",
+              "displayName": "command",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "review_kind",
+              "displayName": "review_kind",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "model",
+              "displayName": "model",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "comments_count",
+              "displayName": "comments_count",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "reviewed_at",
+              "displayName": "reviewed_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "d291d501-d5fc-4d98-aaed-827c7e24eb65",
+      "name": "Save Reviewed PR",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        2352,
+        256
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "PR Trigger": {
+      "main": [
+        [
+          {
+            "node": "Prepare PR (opened only)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare PR (opened only)": {
+      "main": [
+        [
+          {
+            "node": "Get PR Diff",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get PR Diff": {
+      "main": [
+        [
+          {
+            "node": "Split Diff Into Hunks",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "PR Comment Trigger": {
+      "main": [
+        [
+          {
+            "node": "Prepare Command",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Command": {
+      "main": [
+        [
+          {
+            "node": "PR Already In Table",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "PR Not Reviewed Yet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "PR Already In Table": {
+      "main": [
+        [
+          {
+            "node": "Reply: Already Reviewed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "PR Not Reviewed Yet": {
+      "main": [
+        [
+          {
+            "node": "Get PR Diff",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Diff Into Hunks": {
+      "main": [
+        [
+          {
+            "node": "Route By Model",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Route By Model": {
+      "main": [
+        [
+          {
+            "node": "Review Block (GPT)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Review Block (DeepSeek)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Review Block (GPT)": {
+      "main": [
+        [
+          {
+            "node": "Build Review Payload",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GPT Model (secondary)": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Review Block (GPT)",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Review Block (DeepSeek)": {
+      "main": [
+        [
+          {
+            "node": "Build Review Payload",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "DeepSeek Model (primary)": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Review Block (DeepSeek)",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Review Payload": {
+      "main": [
+        [
+          {
+            "node": "Post Review (inline comments)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Post Review (inline comments)": {
+      "main": [
+        [
+          {
+            "node": "Save Reviewed PR",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "1e9d31e0-4d8d-4e58-b71a-a2745cda713f",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "68dbbb4e8fa686c3fd4e9982ade6836edb66976f207553e7ac22df961581c78c"
+  },
+  "nodeGroups": [],
+  "id": "xc8U9rDG7Lh0784b",
+  "tags": []
+}
