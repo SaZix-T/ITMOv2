@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="color-scheme" content="dark">
+  <title>TaskFlow</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <div id="app">
+    <header>
+      <h1>TaskFlow</h1>
+      <nav class="tabs" role="tablist" aria-label="Views">
+        <button type="button" class="tab active" id="tab-tasks" role="tab" aria-selected="true" aria-controls="tasks-view" data-view="tasks" onclick="switchView('tasks')">Tasks</button>
+        <button type="button" class="tab" id="tab-stats" role="tab" aria-selected="false" aria-controls="stats-view" data-view="stats" onclick="switchView('stats')">Statistics</button>
+      </nav>
+    </header>
+    <main>
+      <p id="action-error" class="action-error" hidden></p>
+      <section id="tasks-view" role="tabpanel" aria-labelledby="tab-tasks">
+        <input type="text" id="search" placeholder="Search tasks..." autocomplete="off">
+        <form id="task-form">
+          <input type="text" id="task-title" placeholder="What needs to be done?" required autofocus>
+          <input type="text" id="task-desc" placeholder="Description (optional)">
+          <input type="date" id="task-due" placeholder="Due date">
+          <button type="submit">Add Task</button>
+        </form>
+        <div id="task-list">
+          <p id="loading">Loading...</p>
+        </div>
+      </section>
+      <section id="stats-view" role="tabpanel" aria-labelledby="tab-stats" hidden>
+        <div id="stats-content">
+          <p id="stats-loading">Loading...</p>
+        </div>
+      </section>
+    </main>
+  </div>
+  <script src="/app.js"></script>
+</body>
+</html>
