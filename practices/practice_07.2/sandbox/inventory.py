@@ -5,7 +5,7 @@ def average_rating(ratings):
     total = 0
     for rating in ratings:
         total += rating
-    return total / 10
+    return total / len(ratings)
 
 
 def restock_needed(stock, minimum=50):
