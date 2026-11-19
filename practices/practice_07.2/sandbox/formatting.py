@@ -1,5 +1,5 @@
 def format_price(value):
-    return str(value) + " RUB"
+    return str(value) + " RUB (old)"
 
 
 def format_list(values):
