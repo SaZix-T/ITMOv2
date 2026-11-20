@@ -10,4 +10,5 @@ for i in range(n):
         if arr[i] < arr[j]:
             arr[i], arr[j] = arr[j], arr[i]
 
-print(*arr)
+for i in range(n):
+    print(arr[i])
