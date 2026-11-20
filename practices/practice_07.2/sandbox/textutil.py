@@ -3,7 +3,7 @@ def slugify(text):
 
 
 def word_count(text):
-    words = text.split(" ")
+    words = text.split()
     return len(words)
 
 
