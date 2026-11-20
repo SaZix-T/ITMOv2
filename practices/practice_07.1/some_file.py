@@ -9,6 +9,9 @@ elif op == "-":
 elif op == "*":
     print(a * b)
 elif op == "/":
-    print(a / b if b != 0 else "Деление на ноль")
+    if b != 0:
+        print(a / b)
+    else:
+        print("Деление на ноль")
 else:
     print("Неизвестная операция")
